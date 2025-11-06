@@ -119,11 +119,11 @@ function App() {
 
   const handleLogin = (username: string, password_input: string) => {
     // Hardcoded user for now
-    if (username === 'SYSLC' && password_input === 'test123') {
+    if (username === 'test' && password_input === 'test123') {
       setIsLoggedIn(true);
       showToast('Prijava uspješna!', 'success');
     } else {
-      showToast('Invalid username or password.', 'error');
+      showToast('Neispravno korisničko ime ili lozinka.', 'error');
     }
   };
 

@@ -135,12 +135,12 @@ const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage
                         id="user-menu-button"
                     >
                         <UserIcon className="h-5 w-5" />
-                        <span>Sistemski operater</span>
+                        <span>Testni operater</span>
                         <ChevronDownIcon className="h-4 w-4" />
                     </button>
                     {userDropdownOpen && (
                         <div 
-                            className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none" 
+                            className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-slate-700 ring-1 ring-black ring-opacity-5 focus:outline-none" 
                             role="menu" 
                             aria-orientation="vertical" 
                             aria-labelledby="user-menu-button"
@@ -152,7 +152,7 @@ const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage
                                     onLogout();
                                     setUserDropdownOpen(false);
                                 }} 
-                                className="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white"
+                                className="block px-3 py-2 text-sm text-white hover:bg-slate-600 rounded-md mx-1"
                                 role="menuitem"
                             >
                                 Odjava
