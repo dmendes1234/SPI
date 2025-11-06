@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { racunskiPlanData } from '../data/racunskiPlanData';
 import type { RacunskiPlanItem } from '../types';
@@ -14,6 +15,7 @@ interface RacunskiPlanModalProps {
 const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, onSelect, initiallySelectedAccounts }) => {
   const [filters, setFilters] = useState({ konto: '', opis: ''});
   const [taggedAccounts, setTaggedAccounts] = useState<RacunskiPlanItem[]>([]);
+  const [showTaggedOnly, setShowTaggedOnly] = useState(false);
 
   const toolbarActions = [
     { label: 'Osvježi', icon: <RefreshIcon /> },
@@ -25,15 +27,22 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
     if (isOpen) {
       setTaggedAccounts(initiallySelectedAccounts);
       setFilters({ konto: '', opis: '' }); // Reset filters when modal opens
+      setShowTaggedOnly(false); // Reset checkbox state
     }
   }, [isOpen, initiallySelectedAccounts]);
 
   const filteredData = useMemo(() => {
-    return racunskiPlanData.filter(item => 
+    let data = racunskiPlanData;
+    if (showTaggedOnly) {
+        const taggedKonti = new Set(taggedAccounts.map(a => a.konto));
+        data = racunskiPlanData.filter(item => taggedKonti.has(item.konto));
+    }
+    
+    return data.filter(item => 
         item.konto.toLowerCase().includes(filters.konto.toLowerCase()) &&
         item.opis.toLowerCase().includes(filters.opis.toLowerCase())
     );
-  }, [filters]);
+  }, [filters, taggedAccounts, showTaggedOnly]);
   
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -193,15 +202,27 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
           </div>
         </div>
 
-        <div className="p-3 bg-gray-100 border-t flex justify-end items-center space-x-2">
-            <button onClick={handleSelect} className="flex items-center space-x-1 px-3 py-1.5 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                <CheckCircleIcon className="h-4 w-4" />
-                <span>Odabir ({taggedAccounts.length})</span>
-            </button>
-            <button onClick={onClose} className="flex items-center space-x-1 px-3 py-1.5 text-xs text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
-                <InfoIcon className="h-4 w-4" />
-                <span>Izlaz</span>
-            </button>
+        <div className="p-3 bg-gray-100 border-t flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+                <input 
+                    type="checkbox"
+                    id="showTaggedOnlyCheckbox"
+                    checked={showTaggedOnly}
+                    onChange={(e) => setShowTaggedOnly(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="showTaggedOnlyCheckbox" className="text-xs text-gray-700 cursor-pointer">Prikaži samo označene</label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <button onClick={handleSelect} className="flex items-center space-x-1 px-3 py-1.5 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                    <CheckCircleIcon className="h-4 w-4" />
+                    <span>Odabir ({taggedAccounts.length})</span>
+                </button>
+                <button onClick={onClose} className="flex items-center space-x-1 px-3 py-1.5 text-xs text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                    <InfoIcon className="h-4 w-4" />
+                    <span>Izlaz</span>
+                </button>
+            </div>
         </div>
       </div>
     </div>
