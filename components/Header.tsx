@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Bars3Icon, HeartIcon, SearchIcon, UserIcon, ChevronDownIcon, XIcon, ChevronRightIcon } from '../constants';
 import type { NavItem } from '../types';
 
@@ -9,6 +10,7 @@ interface HeaderProps {
   setCurrentPage: (page: string) => void;
   onGoHome: () => void;
   navItems: NavItem[];
+  onLogout: () => void;
 }
 
 const DropdownMenu: React.FC<{ items: NavItem[]; setCurrentPage: (page: string) => void; closeMenus: () => void; level?: number }> = ({ items, setCurrentPage, closeMenus, level = 0 }) => {
@@ -79,7 +81,22 @@ const MobileNavItem: React.FC<{ item: NavItem; setCurrentPage: (page: string) =>
 };
 
 
-const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage, onGoHome, navItems }) => {
+const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage, onGoHome, navItems, onLogout }) => {
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
   return (
     <header className="bg-slate-700 text-white shadow-md relative z-30">
       <div className="mx-auto px-4">
@@ -109,10 +126,39 @@ const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs">
             <span className="hidden sm:block">Korisnik d. o. o. (01) - 2025.</span>
             <div className="flex items-center space-x-2 sm:space-x-4">
-                <div className="hidden sm:flex items-center space-x-1 cursor-pointer p-2 rounded-md hover:bg-slate-600">
-                    <UserIcon className="h-5 w-5" />
-                    <span>Sistemski operater</span>
-                    <ChevronDownIcon className="h-4 w-4" />
+                <div ref={userDropdownRef} className="relative">
+                    <button 
+                        onClick={() => setUserDropdownOpen(prev => !prev)} 
+                        className="hidden sm:flex items-center space-x-1 cursor-pointer p-2 rounded-md hover:bg-slate-600 focus:outline-none"
+                        aria-haspopup="true"
+                        aria-expanded={userDropdownOpen}
+                        id="user-menu-button"
+                    >
+                        <UserIcon className="h-5 w-5" />
+                        <span>Sistemski operater</span>
+                        <ChevronDownIcon className="h-4 w-4" />
+                    </button>
+                    {userDropdownOpen && (
+                        <div 
+                            className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none" 
+                            role="menu" 
+                            aria-orientation="vertical" 
+                            aria-labelledby="user-menu-button"
+                        >
+                             <a 
+                                href="#" 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onLogout();
+                                    setUserDropdownOpen(false);
+                                }} 
+                                className="block px-4 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white"
+                                role="menuitem"
+                            >
+                                Odjava
+                            </a>
+                        </div>
+                    )}
                 </div>
                 <button className="p-2 rounded-md hover:bg-slate-600" aria-label="Favorites">
                     <HeartIcon className="h-5 w-5" />

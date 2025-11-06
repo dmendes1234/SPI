@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -7,6 +8,7 @@ import Footer from './components/Footer';
 import MainPageContent from './components/MainPageContent';
 import KatalogAopaPage from './components/KatalogAopaPage';
 import Toast from './components/Toast'; // Import Toast component
+import LoginPage from './components/LoginPage'; // Import LoginPage
 import type { AopItem, DependentAccount, NavItem } from './types';
 import { INITIAL_AOP_DATA, INITIAL_DEPENDENT_ACCOUNTS_DATA } from './constants';
 import { defaultNavItems, app147NavItems } from './data/navData';
@@ -52,7 +54,7 @@ function App() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
-
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // New state for login status
 
   const navItems: NavItem[] = activeApp?.id === '147' ? app147NavItems : defaultNavItems;
 
@@ -115,6 +117,36 @@ function App() {
     showToast(message, 'success');
   };
 
+  const handleLogin = (username: string, password_input: string) => {
+    // Hardcoded user for now
+    if (username === 'SYSLC' && password_input === 'test123') {
+      setIsLoggedIn(true);
+      showToast('Prijava uspješna!', 'success');
+    } else {
+      showToast('Invalid username or password.', 'error');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    showToast('Odjavljeni ste.', 'info');
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-100">
+        <LoginPage onLogin={handleLogin} />
+        {toastMessage && (
+          <Toast 
+            message={toastMessage.message} 
+            type={toastMessage.type} 
+            onClose={() => setToastMessage(null)} 
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-white text-gray-800 font-sans text-sm">
       <Sidebar onToggleAppDrawer={() => setIsAppDrawerOpen(prev => !prev)} onGoHome={handleGoHome} />
@@ -131,6 +163,7 @@ function App() {
           setCurrentPage={setCurrentPage}
           onGoHome={handleGoHome}
           navItems={navItems}
+          onLogout={handleLogout}
         />
         <div className="flex-1 flex flex-col overflow-y-auto p-3 bg-gray-100">
           {!activeApp && (
@@ -147,6 +180,7 @@ function App() {
               selectedAop={selectedAop}
               onSelectAop={setSelectedAop}
               onUpdateAop={handleUpdateAop}
+              // Fix: Corrected typo. The value passed to onUpdateDependentAccount should be the handler function 'handleUpdateDependentAccount'.
               onUpdateDependentAccount={handleUpdateDependentAccount}
               onSetDependentAccountsForAop={handleSetDependentAccountsForAop}
               allDependentAccountsData={dependentAccountsData}
