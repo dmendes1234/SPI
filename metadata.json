@@ -1,0 +1,5 @@
+{
+  "name": "SPI Accounting Interface",
+  "description": "A modern web-based replica of an enterprise accounting software interface, built with React and Tailwind CSS. It features a detailed layout with multiple tables, toolbars, and navigation elements designed for financial data management.",
+  "requestFramePermissions": []
+}
