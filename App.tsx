@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -10,7 +9,6 @@ import KatalogOperateraPage from './components/KatalogOperateraPage'; // New
 import Toast from './components/Toast'; // Import Toast component
 import LoginPage from './components/LoginPage'; // Import LoginPage
 import type { AopItem, DependentAccount, NavItem, Operator } from './types';
-import { INITIAL_AOP_DATA, INITIAL_DEPENDENT_ACCOUNTS_DATA } from './constants';
 import { defaultNavItems, app147NavItems, app099NavItems } from './data/navData';
 
 interface AppInfo {
@@ -45,21 +43,40 @@ const APP_USERS_FOR_COPY = [
   { sifra: '02', naziv: 'Testni korisnik' },
 ];
 
+async function apiFetch(url: string, options?: RequestInit) {
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+        try {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP greška! Status: ${response.status}`);
+        } catch (e) {
+            throw new Error(`HTTP greška! Status: ${response.status} ${response.statusText}`);
+        }
+    }
+    
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        return response.json();
+    }
+    return null;
+}
+
+
 function App() {
   const [activeApp, setActiveApp] = useState<AppInfo | null>(APPLICATIONS.find(app => app.id === '147') || null);
   const [currentPage, setCurrentPage] = useState('main');
-  const [aopData, setAopData] = useState<AopItem[]>(INITIAL_AOP_DATA);
-  const [dependentAccountsData, setDependentAccountsData] = useState<{[key: string]: DependentAccount[]}>(INITIAL_DEPENDENT_ACCOUNTS_DATA);
-  const [selectedAop, setSelectedAop] = useState<AopItem | null>(aopData.find(item => item.id === 4) || aopData[0]);
+  const [aopData, setAopData] = useState<AopItem[]>([]);
+  const [dependentAccountsData, setDependentAccountsData] = useState<{[key: string]: DependentAccount[]}>({});
+  const [selectedAop, setSelectedAop] = useState<AopItem | null>(null);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [loggedInOperator, setLoggedInOperator] = useState<Operator | null>(null);
   const appDrawerContainerRef = useRef<HTMLDivElement>(null);
-  const [operators, setOperators] = useState<Operator[]>([
-    { id: '1', ime: 'Test', prezime: 'Operater', korisnickoIme: 'test', lozinka: 'test123' }
-  ]);
+  const [operators, setOperators] = useState<Operator[]>([]);
 
+  const API_BASE_URL = '/api';
 
   const navItems: NavItem[] = activeApp?.id === '147' 
     ? app147NavItems 
@@ -67,46 +84,101 @@ function App() {
     ? app099NavItems
     : defaultNavItems;
 
-  const handleUpdateAop = (updatedAop: AopItem) => {
-    setAopData(prevData => prevData.map(item => item.id === updatedAop.id ? updatedAop : item));
-    if (selectedAop?.id === updatedAop.id) {
-      setSelectedAop(updatedAop);
-    }
-  };
-
-  const handleUpdateDependentAccount = (updatedAccount: DependentAccount) => {
-    if (!selectedAop) return;
-    setDependentAccountsData(prevData => {
-        const newAccounts = (prevData[selectedAop.aop] || []).map(acc => acc.id === updatedAccount.id ? updatedAccount : acc);
-        return {
-            ...prevData,
-            [selectedAop.aop]: newAccounts,
-        };
-    });
-  };
-
-  const handleSetDependentAccountsForAop = (accountsToSet: Omit<DependentAccount, 'id'>[]) => {
-    if (!selectedAop) return;
-
-    const newAccountsForAop: DependentAccount[] = accountsToSet.map((data, index) => ({
-      ...data,
-      id: `${selectedAop.aop}-${Date.now()}-${index}`,
-    }));
-
-    setDependentAccountsData(prevData => {
-      return {
-        ...prevData,
-        [selectedAop.aop]: newAccountsForAop,
-      };
-    });
-  };
-
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'info') => {
     setToastMessage({ message, type });
     setTimeout(() => {
       setToastMessage(null);
-    }, 3000); // Hide toast after 3 seconds
+    }, 5000); // Increased timeout to 5 seconds for better readability
   }, []);
+
+  const fetchOperators = useCallback(async () => {
+    try {
+      const data = await apiFetch(`${API_BASE_URL}/operators`);
+      setOperators(data || []);
+    } catch (error) {
+      showToast((error as Error).message || 'Greška pri dohvaćanju operatera.', 'error');
+      console.error(error);
+    }
+  }, [showToast]);
+
+  const fetchAopData = useCallback(async () => {
+    try {
+      const data = await apiFetch(`${API_BASE_URL}/aop`);
+      setAopData(data || []);
+      if (!selectedAop && data && data.length > 0) {
+        setSelectedAop(data.find((item: AopItem) => item.id === 4) || data[0]);
+      }
+    } catch (error) {
+      showToast((error as Error).message || 'Greška pri dohvaćanju AOP stavki.', 'error');
+      console.error(error);
+    }
+  }, [showToast, selectedAop]);
+
+  const fetchDependentAccounts = useCallback(async () => {
+    try {
+      const data = await apiFetch(`${API_BASE_URL}/dependent-accounts`);
+      setDependentAccountsData(data || {});
+    } catch (error) {
+      showToast((error as Error).message || 'Greška pri dohvaćanju zavisnih konta.', 'error');
+      console.error(error);
+    }
+  }, [showToast]);
+
+
+  useEffect(() => {
+    if (loggedInOperator) {
+      fetchOperators();
+      fetchAopData();
+      fetchDependentAccounts();
+    }
+  }, [loggedInOperator, fetchOperators, fetchAopData, fetchDependentAccounts]);
+
+  const handleUpdateAop = async (updatedAop: AopItem) => {
+    try {
+      await apiFetch(`${API_BASE_URL}/aop`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedAop)
+      });
+      setAopData(prevData => prevData.map(item => item.id === updatedAop.id ? updatedAop : item));
+      if (selectedAop?.id === updatedAop.id) {
+        setSelectedAop(updatedAop);
+      }
+      showToast('AOP stavka ažurirana.', 'success');
+    } catch (error) {
+      showToast((error as Error).message || 'Greška pri ažuriranju AOP stavke.', 'error');
+    }
+  };
+
+  const handleUpdateDependentAccount = async (updatedAccount: DependentAccount) => {
+    if (!selectedAop) return;
+     try {
+        await apiFetch(`${API_BASE_URL}/dependent-accounts`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aop: selectedAop.aop, ...updatedAccount })
+        });
+        await fetchDependentAccounts();
+        showToast('Zavisni konto ažuriran.', 'success');
+    } catch(error) {
+        showToast((error as Error).message || 'Greška pri ažuriranju zavisnog konta.', 'error');
+    }
+  };
+
+  const handleSetDependentAccountsForAop = async (accountsToSet: Omit<DependentAccount, 'id'>[]) => {
+    if (!selectedAop) return;
+    try {
+        await apiFetch(`${API_BASE_URL}/dependent-accounts`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ aop: selectedAop.aop, accounts: accountsToSet })
+        });
+        await fetchDependentAccounts();
+        showToast('Zavisna konta uspješno spremljena.', 'success');
+    } catch(error) {
+        showToast((error as Error).message || 'Greška pri spremanju zavisnih konta.', 'error');
+    }
+  };
 
   const handleSelectApp = (appInfo: AppInfo) => {
     setActiveApp(appInfo);
@@ -121,54 +193,84 @@ function App() {
 
   const handleCopyAllDependentAccounts = (selectedUserCodes: string[], allDependentAccounts: {[key: string]: DependentAccount[]}) => {
     const userNames = APP_USERS_FOR_COPY.filter(user => selectedUserCodes.includes(user.sifra)).map(user => user.naziv);
-    // Simulating the data being copied without actually modifying state
     const message = `Prijepis svih zavisnih konta uspješno obavljen na korisnike: ${userNames.join(', ')}.`;
     showToast(message, 'success');
   };
   
-  const handleAddOperator = (operator: Omit<Operator, 'id'>) => {
-    const newOperator = { ...operator, id: Date.now().toString() };
-    setOperators(prev => [...prev, newOperator]);
-    showToast('Novi operater uspješno dodan.', 'success');
-  };
-
-  const handleUpdateOperator = (updatedOperator: Operator) => {
-    setOperators(prev => prev.map(op => op.id === updatedOperator.id ? updatedOperator : op));
-    if (loggedInOperator && loggedInOperator.id === updatedOperator.id) {
-      setLoggedInOperator(updatedOperator);
-    }
-    showToast('Podaci o operateru uspješno ažurirani.', 'success');
-  };
-
-  const handleDeleteOperator = (operatorId: string) => {
-    if (operators.length <= 1) {
-        showToast('Nije moguće obrisati zadnjeg operatera.', 'error');
-        return;
-    }
-    setOperators(prev => prev.filter(op => op.id !== operatorId));
-    showToast('Operater uspješno obrisan.', 'success');
-  };
-
-
-  const handleLogin = (username: string, password_input: string) => {
-    const user = operators.find(op => op.korisnickoIme === username && op.lozinka === password_input);
-    if (user) {
-      setLoggedInOperator(user);
-      showToast('Prijava uspješna!', 'success');
-    } else {
-      showToast('Neispravno korisničko ime ili lozinka.', 'error');
+  const handleAddOperator = async (operator: Omit<Operator, 'id'>) => {
+    try {
+      await apiFetch(`${API_BASE_URL}/operators`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(operator)
+      });
+      await fetchOperators();
+      showToast('Novi operater uspješno dodan.', 'success');
+    } catch (error) {
+      showToast((error as Error).message || 'Greška pri dodavanju operatera.', 'error');
     }
   };
+
+  const handleUpdateOperator = async (updatedOperatorData: Operator & { trenutnaLozinka?: string }) => {
+    try {
+      const updatedOperator = await apiFetch(`${API_BASE_URL}/operators`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedOperatorData)
+      });
+      await fetchOperators();
+      
+      if (loggedInOperator && updatedOperator && loggedInOperator.id === updatedOperator.id) {
+        setLoggedInOperator(prev => ({...prev, ...updatedOperator}));
+      }
+      showToast('Podaci o operateru uspješno ažurirani.', 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Greška pri ažuriranju operatera.', 'error');
+    }
+  };
+
+  const handleDeleteOperator = async (operatorId: string) => {
+    try {
+      await apiFetch(`${API_BASE_URL}/operators?id=${operatorId}`, {
+        method: 'DELETE'
+      });
+      await fetchOperators();
+      showToast('Operater uspješno obrisan.', 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Greška pri brisanju operatera.', 'error');
+    }
+  };
+
+
+  const handleLogin = async (username: string, password_input: string) => {
+    const user = await apiFetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password: password_input })
+    });
+    setLoggedInOperator(user);
+    showToast('Prijava uspješna!', 'success');
+  };
+
+  const handleLogout = useCallback(() => {
+    setLoggedInOperator(null);
+    setAopData([]);
+    setDependentAccountsData({});
+    setOperators([]);
+    setSelectedAop(null);
+    setCurrentPage('main');
+    setActiveApp(APPLICATIONS.find(app => app.id === '147') || null);
+  }, []);
 
   const handleManualLogout = useCallback(() => {
-    setLoggedInOperator(null);
+    handleLogout();
     showToast('Odjavljeni ste.', 'info');
-  }, [showToast]);
+  }, [handleLogout, showToast]);
 
   const handleInactivityLogout = useCallback(() => {
-    setLoggedInOperator(null);
+    handleLogout();
     showToast('Odjavljeni ste zbog neaktivnosti.', 'info');
-  }, [showToast]);
+  }, [handleLogout, showToast]);
 
   useEffect(() => {
     if (!loggedInOperator) {
@@ -179,7 +281,7 @@ function App() {
 
     const resetTimer = () => {
       clearTimeout(inactivityTimer);
-      inactivityTimer = window.setTimeout(handleInactivityLogout, 60000); // 1 minute timeout
+      inactivityTimer = window.setTimeout(handleInactivityLogout, 600000); // 10 minutes timeout
     };
 
     const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
@@ -216,7 +318,7 @@ function App() {
   if (!loggedInOperator) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100 p-4">
-        <LoginPage onLogin={handleLogin} />
+        <LoginPage onLogin={handleLogin} showToast={showToast} />
         {toastMessage && (
           <Toast 
             message={toastMessage.message} 
@@ -264,7 +366,6 @@ function App() {
               selectedAop={selectedAop}
               onSelectAop={setSelectedAop}
               onUpdateAop={handleUpdateAop}
-              // Fix: Corrected typo. The value passed to onUpdateDependentAccount should be the handler function 'handleUpdateDependentAccount'.
               onUpdateDependentAccount={handleUpdateDependentAccount}
               onSetDependentAccountsForAop={handleSetDependentAccountsForAop}
               allDependentAccountsData={dependentAccountsData}
@@ -275,7 +376,6 @@ function App() {
             <KatalogOperateraPage
               operators={operators}
               onAddOperator={handleAddOperator}
-              // Fix: Corrected typo. The value passed to onUpdateOperator should be the handler function 'handleUpdateOperator'.
               onUpdateOperator={handleUpdateOperator}
               onDeleteOperator={handleDeleteOperator}
             />
