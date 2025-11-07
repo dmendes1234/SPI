@@ -30,3 +30,11 @@ export interface NavItem {
     page?: string;
     children?: NavItem[];
 }
+
+export interface Operator {
+  id: string;
+  ime: string;
+  prezime: string;
+  korisnickoIme: string;
+  lozinka: string;
+}

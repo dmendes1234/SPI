@@ -1,17 +1,17 @@
 
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import AppDrawer from './components/AppDrawer';
 import Footer from './components/Footer';
 import MainPageContent from './components/MainPageContent';
 import KatalogAopaPage from './components/KatalogAopaPage';
+import KatalogOperateraPage from './components/KatalogOperateraPage'; // New
 import Toast from './components/Toast'; // Import Toast component
 import LoginPage from './components/LoginPage'; // Import LoginPage
-import type { AopItem, DependentAccount, NavItem } from './types';
+import type { AopItem, DependentAccount, NavItem, Operator } from './types';
 import { INITIAL_AOP_DATA, INITIAL_DEPENDENT_ACCOUNTS_DATA } from './constants';
-import { defaultNavItems, app147NavItems } from './data/navData';
+import { defaultNavItems, app147NavItems, app099NavItems } from './data/navData';
 
 interface AppInfo {
   id: string;
@@ -54,9 +54,18 @@ function App() {
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // New state for login status
+  const [loggedInOperator, setLoggedInOperator] = useState<Operator | null>(null);
+  const appDrawerContainerRef = useRef<HTMLDivElement>(null);
+  const [operators, setOperators] = useState<Operator[]>([
+    { id: '1', ime: 'Test', prezime: 'Operater', korisnickoIme: 'test', lozinka: 'test123' }
+  ]);
 
-  const navItems: NavItem[] = activeApp?.id === '147' ? app147NavItems : defaultNavItems;
+
+  const navItems: NavItem[] = activeApp?.id === '147' 
+    ? app147NavItems 
+    : activeApp?.id === '099'
+    ? app099NavItems
+    : defaultNavItems;
 
   const handleUpdateAop = (updatedAop: AopItem) => {
     setAopData(prevData => prevData.map(item => item.id === updatedAop.id ? updatedAop : item));
@@ -116,25 +125,97 @@ function App() {
     const message = `Prijepis svih zavisnih konta uspješno obavljen na korisnike: ${userNames.join(', ')}.`;
     showToast(message, 'success');
   };
+  
+  const handleAddOperator = (operator: Omit<Operator, 'id'>) => {
+    const newOperator = { ...operator, id: Date.now().toString() };
+    setOperators(prev => [...prev, newOperator]);
+    showToast('Novi operater uspješno dodan.', 'success');
+  };
+
+  const handleUpdateOperator = (updatedOperator: Operator) => {
+    setOperators(prev => prev.map(op => op.id === updatedOperator.id ? updatedOperator : op));
+    if (loggedInOperator && loggedInOperator.id === updatedOperator.id) {
+      setLoggedInOperator(updatedOperator);
+    }
+    showToast('Podaci o operateru uspješno ažurirani.', 'success');
+  };
+
+  const handleDeleteOperator = (operatorId: string) => {
+    if (operators.length <= 1) {
+        showToast('Nije moguće obrisati zadnjeg operatera.', 'error');
+        return;
+    }
+    setOperators(prev => prev.filter(op => op.id !== operatorId));
+    showToast('Operater uspješno obrisan.', 'success');
+  };
+
 
   const handleLogin = (username: string, password_input: string) => {
-    // Hardcoded user for now
-    if (username === 'test' && password_input === 'test123') {
-      setIsLoggedIn(true);
+    const user = operators.find(op => op.korisnickoIme === username && op.lozinka === password_input);
+    if (user) {
+      setLoggedInOperator(user);
       showToast('Prijava uspješna!', 'success');
     } else {
       showToast('Neispravno korisničko ime ili lozinka.', 'error');
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
+  const handleManualLogout = useCallback(() => {
+    setLoggedInOperator(null);
     showToast('Odjavljeni ste.', 'info');
-  };
+  }, [showToast]);
 
-  if (!isLoggedIn) {
+  const handleInactivityLogout = useCallback(() => {
+    setLoggedInOperator(null);
+    showToast('Odjavljeni ste zbog neaktivnosti.', 'info');
+  }, [showToast]);
+
+  useEffect(() => {
+    if (!loggedInOperator) {
+      return;
+    }
+
+    let inactivityTimer: number;
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = window.setTimeout(handleInactivityLogout, 60000); // 1 minute timeout
+    };
+
+    const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+    
+    activityEvents.forEach(event => {
+      window.addEventListener(event, resetTimer);
+    });
+
+    resetTimer(); // Start the timer on login
+
+    // Cleanup function
+    return () => {
+      clearTimeout(inactivityTimer);
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [loggedInOperator, handleInactivityLogout]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isAppDrawerOpen && appDrawerContainerRef.current && !appDrawerContainerRef.current.contains(event.target as Node)) {
+        setIsAppDrawerOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isAppDrawerOpen]);
+
+
+  if (!loggedInOperator) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-100">
+      <div className="flex h-screen items-center justify-center bg-gray-100 p-4">
         <LoginPage onLogin={handleLogin} />
         {toastMessage && (
           <Toast 
@@ -149,13 +230,15 @@ function App() {
 
   return (
     <div className="flex h-screen bg-white text-gray-800 font-sans text-sm">
-      <Sidebar onToggleAppDrawer={() => setIsAppDrawerOpen(prev => !prev)} onGoHome={handleGoHome} />
-      <AppDrawer 
-        isOpen={isAppDrawerOpen} 
-        onSelectApp={handleSelectApp}
-        activeAppId={activeApp?.id || null}
-        applications={APPLICATIONS}
-      />
+      <div ref={appDrawerContainerRef} className="flex flex-shrink-0">
+        <Sidebar onToggleAppDrawer={() => setIsAppDrawerOpen(prev => !prev)} onGoHome={handleGoHome} />
+        <AppDrawer 
+          isOpen={isAppDrawerOpen} 
+          onSelectApp={handleSelectApp}
+          activeAppId={activeApp?.id || null}
+          applications={APPLICATIONS}
+        />
+      </div>
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header 
           isNavOpen={isNavOpen} 
@@ -163,7 +246,8 @@ function App() {
           setCurrentPage={setCurrentPage}
           onGoHome={handleGoHome}
           navItems={navItems}
-          onLogout={handleLogout}
+          onLogout={handleManualLogout}
+          loggedInOperator={loggedInOperator}
         />
         <div className="flex-1 flex flex-col overflow-y-auto p-3 bg-gray-100">
           {!activeApp && (
@@ -185,6 +269,15 @@ function App() {
               onSetDependentAccountsForAop={handleSetDependentAccountsForAop}
               allDependentAccountsData={dependentAccountsData}
               onCopyAllDependentAccounts={handleCopyAllDependentAccounts}
+            />
+          )}
+          {currentPage === 'katalog-operatera' && activeApp?.id === '099' && (
+            <KatalogOperateraPage
+              operators={operators}
+              onAddOperator={handleAddOperator}
+              // Fix: Corrected typo. The value passed to onUpdateOperator should be the handler function 'handleUpdateOperator'.
+              onUpdateOperator={handleUpdateOperator}
+              onDeleteOperator={handleDeleteOperator}
             />
           )}
         </div>

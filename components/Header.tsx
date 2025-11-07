@@ -1,8 +1,9 @@
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Bars3Icon, HeartIcon, SearchIcon, UserIcon, ChevronDownIcon, XIcon, ChevronRightIcon } from '../constants';
-import type { NavItem } from '../types';
+import type { NavItem, Operator } from '../types';
 
 interface HeaderProps {
   isNavOpen: boolean;
@@ -11,6 +12,7 @@ interface HeaderProps {
   onGoHome: () => void;
   navItems: NavItem[];
   onLogout: () => void;
+  loggedInOperator: Operator | null;
 }
 
 const DropdownMenu: React.FC<{ items: NavItem[]; setCurrentPage: (page: string) => void; closeMenus: () => void; level?: number }> = ({ items, setCurrentPage, closeMenus, level = 0 }) => {
@@ -81,7 +83,7 @@ const MobileNavItem: React.FC<{ item: NavItem; setCurrentPage: (page: string) =>
 };
 
 
-const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage, onGoHome, navItems, onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage, onGoHome, navItems, onLogout, loggedInOperator }) => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -129,13 +131,13 @@ const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage
                 <div ref={userDropdownRef} className="relative">
                     <button 
                         onClick={() => setUserDropdownOpen(prev => !prev)} 
-                        className="hidden sm:flex items-center space-x-1 cursor-pointer p-2 rounded-md hover:bg-slate-600 focus:outline-none"
+                        className="flex items-center space-x-1 cursor-pointer p-2 rounded-md hover:bg-slate-600 focus:outline-none"
                         aria-haspopup="true"
                         aria-expanded={userDropdownOpen}
                         id="user-menu-button"
                     >
                         <UserIcon className="h-5 w-5" />
-                        <span>Testni operater</span>
+                        <span className="hidden sm:inline">{loggedInOperator ? `${loggedInOperator.ime} ${loggedInOperator.prezime}` : 'Korisnik'}</span>
                         <ChevronDownIcon className="h-4 w-4" />
                     </button>
                     {userDropdownOpen && (
