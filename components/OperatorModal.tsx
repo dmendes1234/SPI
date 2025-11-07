@@ -29,8 +29,10 @@ const OperatorModal: React.FC<OperatorModalProps> = ({ isOpen, onClose, onSave, 
             setIme(operatorToEdit.ime);
             setPrezime(operatorToEdit.prezime);
             setKorisnickoIme(operatorToEdit.korisnickoIme);
+            // In edit mode, 'lozinka' state is for the new password input, not for storing the old one.
             setLozinka('');
         } else {
+            // Reset for new operator
             setIme('');
             setPrezime('');
             setKorisnickoIme('');
@@ -56,16 +58,13 @@ const OperatorModal: React.FC<OperatorModalProps> = ({ isOpen, onClose, onSave, 
         }
 
         if (isEditMode) {
-            const payload: any = {
-                ...operatorToEdit,
-                ime,
-                prezime,
-                korisnickoIme,
-            };
-            
+            // This is safe because `isEditMode` is `!!operatorToEdit`
+            const originalPassword = operatorToEdit!.lozinka;
+            let passwordToSave = originalPassword;
+
             if (showPasswordChange) {
-                 if (!trenutnaLozinka) {
-                    setError('Unesite trenutnu lozinku za promjenu.');
+                if (trenutnaLozinka !== originalPassword) {
+                    setError('Trenutna lozinka nije ispravna.');
                     return;
                 }
                 if (!novaLozinka || novaLozinka !== ponoviNovuLozinku) {
@@ -76,15 +75,18 @@ const OperatorModal: React.FC<OperatorModalProps> = ({ isOpen, onClose, onSave, 
                     setError('Nova lozinka mora imati barem 6 znakova.');
                     return;
                 }
-                payload.trenutnaLozinka = trenutnaLozinka;
-                payload.lozinka = novaLozinka;
-            } else {
-                // Ensure lozinka is not sent if not being changed
-                delete payload.lozinka;
+                passwordToSave = novaLozinka;
             }
             
-            onSave(payload);
+            onSave({
+                ...operatorToEdit!,
+                ime,
+                prezime,
+                korisnickoIme,
+                lozinka: passwordToSave,
+            });
         } else {
+            // New operator mode
             if (!lozinka || lozinka.length < 6) {
                 setError('Lozinka je obavezna i mora imati barem 6 znakova.');
                 return;
@@ -95,6 +97,8 @@ const OperatorModal: React.FC<OperatorModalProps> = ({ isOpen, onClose, onSave, 
             }
             onSave({ ime, prezime, korisnickoIme, lozinka });
         }
+        
+        onClose();
     };
 
     return (
