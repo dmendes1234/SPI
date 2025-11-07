@@ -57,7 +57,7 @@ function App() {
   const [loggedInOperator, setLoggedInOperator] = useState<Operator | null>(null);
   const appDrawerContainerRef = useRef<HTMLDivElement>(null);
   const [operators, setOperators] = useState<Operator[]>([
-    { id: '1', ime: 'Test', prezime: 'Operater', korisnickoIme: 'test', lozinka: 'test123' }
+    { id: '1', ime: 'Testni', prezime: 'Operater', korisnickoIme: 'test', lozinka: 'test123' }
   ]);
 
 
