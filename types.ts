@@ -18,6 +18,7 @@ export interface ToolbarAction {
   label: string;
   icon: React.ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export interface RacunskiPlanItem {
@@ -31,6 +32,12 @@ export interface NavItem {
     children?: NavItem[];
 }
 
+export interface Korisnik {
+  id: string;
+  sifra: string;
+  naziv: string;
+}
+
 export interface Operator {
   id: string;
   ime: string;
@@ -38,3 +45,7 @@ export interface Operator {
   korisnickoIme: string;
   lozinka: string;
 }
+
+export type PravaPristupa = {
+  [operatorId: string]: string[]; // An object where keys are operator IDs and values are arrays of user IDs
+};

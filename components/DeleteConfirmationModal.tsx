@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { XIcon } from '../constants';
 
@@ -7,9 +6,10 @@ interface DeleteConfirmationModalProps {
     onClose: () => void;
     onConfirm: () => void;
     itemName: string;
+    itemType: string;
 }
 
-const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({ isOpen, onClose, onConfirm, itemName }) => {
+const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({ isOpen, onClose, onConfirm, itemName, itemType }) => {
     if (!isOpen) return null;
 
     return (
@@ -20,7 +20,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({ isOpe
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close modal"><XIcon className="h-6 w-6" /></button>
                 </div>
                 <div className="mt-4">
-                    <p>Jeste li sigurni da želite obrisati operatera: <strong>{itemName}</strong>?</p>
+                    <p>Jeste li sigurni da želite obrisati {itemType}: <strong>{itemName}</strong>?</p>
                 </div>
                 <div className="flex justify-end pt-6">
                     <button type="button" onClick={onClose} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium mr-2 hover:bg-gray-300">Odustani</button>

@@ -1,3 +1,4 @@
+
 import type { NavItem } from '../types';
 
 export const app099NavItems: NavItem[] = [
@@ -5,9 +6,15 @@ export const app099NavItems: NavItem[] = [
         label: "Katalozi",
         children: [
             { label: "Operateri", page: "katalog-operatera" },
+            { label: "Korisnici", page: "katalog-korisnika" },
         ],
     },
-    { label: "Obrada" },
+    { 
+        label: "Obrada",
+        children: [
+            { label: "Prava pristupa", page: "prava-pristupa" },
+        ] 
+    },
     { label: "Pregledi" },
     { label: "Izvješća" },
     { label: "Parametri" },
@@ -26,6 +33,10 @@ export const app147NavItems: NavItem[] = [
                     {
                         label: "PR-RAS",
                         children: [{ label: "Katalog AOP-a", page: "katalog-aopa" }],
+                    },
+                    {
+                        label: "OBVEZE",
+                        children: [{ label: "Katalog AOP-a", page: "katalog-aopa-obveze" }],
                     },
                 ],
             },

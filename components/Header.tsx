@@ -1,9 +1,7 @@
 
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Bars3Icon, HeartIcon, SearchIcon, UserIcon, ChevronDownIcon, XIcon, ChevronRightIcon } from '../constants';
-import type { NavItem, Operator } from '../types';
+import type { NavItem, Operator, Korisnik } from '../types';
 
 interface HeaderProps {
   isNavOpen: boolean;
@@ -13,6 +11,9 @@ interface HeaderProps {
   navItems: NavItem[];
   onLogout: () => void;
   loggedInOperator: Operator | null;
+  selectedKorisnik: Korisnik | null;
+  allKorisnici: Korisnik[]; // New prop: all available users
+  onSwitchUserRequest: () => void; // New prop: callback to initiate user switch
 }
 
 const DropdownMenu: React.FC<{ items: NavItem[]; setCurrentPage: (page: string) => void; closeMenus: () => void; level?: number }> = ({ items, setCurrentPage, closeMenus, level = 0 }) => {
@@ -83,7 +84,7 @@ const MobileNavItem: React.FC<{ item: NavItem; setCurrentPage: (page: string) =>
 };
 
 
-const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage, onGoHome, navItems, onLogout, loggedInOperator }) => {
+const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage, onGoHome, navItems, onLogout, loggedInOperator, selectedKorisnik, allKorisnici, onSwitchUserRequest }) => {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -126,7 +127,9 @@ const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage
             </nav>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4 text-xs">
-            <span className="hidden sm:block">Korisnik d. o. o. (01) - 2025.</span>
+            {selectedKorisnik && (
+                <span className="hidden sm:block">{selectedKorisnik.naziv} ({selectedKorisnik.sifra}) - 2025.</span>
+            )}
             <div className="flex items-center space-x-2 sm:space-x-4">
                 <div ref={userDropdownRef} className="relative">
                     <button 
@@ -147,7 +150,28 @@ const Header: React.FC<HeaderProps> = ({ isNavOpen, setIsNavOpen, setCurrentPage
                             aria-orientation="vertical" 
                             aria-labelledby="user-menu-button"
                         >
+                            {selectedKorisnik && (
+                                <>
+                                    <div className="block px-3 py-2 text-sm text-white font-semibold md:hidden" role="menuitem">
+                                        Trenutni korisnik:
+                                        <div className="text-gray-200">{selectedKorisnik.naziv} ({selectedKorisnik.sifra})</div>
+                                    </div>
+                                    <hr className="my-1 border-gray-600 md:hidden" />
+                                </>
+                            )}
                              <a 
+                                href="#" 
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    onSwitchUserRequest(); // Call new handler
+                                    setUserDropdownOpen(false);
+                                }} 
+                                className="block px-3 py-2 text-sm text-white hover:bg-slate-600 rounded-md mx-1"
+                                role="menuitem"
+                            >
+                                Promijeni korisnika
+                            </a>
+                            <a
                                 href="#" 
                                 onClick={(e) => {
                                     e.preventDefault();

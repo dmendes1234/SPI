@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { AopItem, DependentAccount } from '../types';
+import type { AopItem, DependentAccount, Korisnik } from '../types';
 import Toolbar from './Toolbar';
 import { EditIcon, RefreshIcon, SaveIcon, ExcelIcon, UploadIcon } from '../constants';
 import ContextMenu from './ContextMenu';
@@ -12,8 +12,9 @@ interface DependentAccountsTableProps {
   accountsData: DependentAccount[];
   onUpdateAccount: (account: DependentAccount) => void;
   onSetAccounts: (accountData: Omit<DependentAccount, 'id'>[]) => void;
-  allDependentAccountsData: {[key: string]: DependentAccount[]}; // New prop
-  onCopyAllDependentAccounts: (selectedUserCodes: string[], allDependentAccounts: {[key: string]: DependentAccount[]}) => void; // New prop
+  allKorisnici: Korisnik[]; // New prop for all users for copying
+  onCopyAllDependentAccounts: (selectedUserIds: string[]) => void; // Updated prop type
+  isAopDescriptionRestricted: boolean;
 }
 
 interface TableFilterInputProps {
@@ -32,7 +33,7 @@ const TableFilterInput: React.FC<TableFilterInputProps> = ({ value, onChange, ar
     />
 );
 
-const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selectedAop, accountsData, onUpdateAccount, onSetAccounts, allDependentAccountsData, onCopyAllDependentAccounts }) => {
+const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selectedAop, accountsData, onUpdateAccount, onSetAccounts, allKorisnici, onCopyAllDependentAccounts, isAopDescriptionRestricted }) => {
   const [selectedAccount, setSelectedAccount] = useState<DependentAccount | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: DependentAccount } | null>(null);
   
@@ -48,13 +49,22 @@ const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selecte
     }
   }, [selectedAop, accountsData]);
   
-  const handleCopyUsersModalConfirm = (selectedUserCodes: string[]) => {
-    onCopyAllDependentAccounts(selectedUserCodes, allDependentAccountsData);
+  const handleCopyUsersModalConfirm = (selectedUserIds: string[]) => {
+    onCopyAllDependentAccounts(selectedUserIds);
     setIsCopyUsersModalOpen(false);
   };
 
   const toolbarActions = [
-    { label: 'Promjena', icon: <EditIcon />, onClick: () => setIsChangeModalOpen(true) },
+    { 
+      label: 'Promjena', 
+      icon: <EditIcon />, 
+      onClick: () => { 
+        if (selectedAop && !isAopDescriptionRestricted) { // Only allow if not restricted
+          setIsChangeModalOpen(true);
+        }
+      },
+      disabled: isAopDescriptionRestricted // Disable if restricted
+    },
     { label: 'Osvježi', icon: <RefreshIcon /> },
     { label: 'Spremi pretragu', icon: <SaveIcon /> },
     { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
@@ -152,6 +162,7 @@ const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selecte
           isOpen={isCopyUsersModalOpen}
           onClose={() => setIsCopyUsersModalOpen(false)}
           onCopy={handleCopyUsersModalConfirm}
+          users={allKorisnici} // Pass the full list of Korisnik objects
         />
       )}
     </div>

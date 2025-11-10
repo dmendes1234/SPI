@@ -122,6 +122,7 @@ const KatalogOperateraPage: React.FC<KatalogOperateraPageProps> = ({ operators, 
           onClose={() => setIsDeleteModalOpen(false)}
           onConfirm={handleDelete}
           itemName={selectedOperator.korisnickoIme}
+          itemType="operatera"
         />
       )}
     </>

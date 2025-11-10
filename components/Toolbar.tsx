@@ -12,7 +12,8 @@ const Toolbar: React.FC<ToolbarProps> = ({ actions }) => {
         <button
           key={index}
           onClick={action.onClick}
-          className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+          disabled={action.disabled}
+          className={`flex items-center space-x-1 px-2 py-1 text-xs text-gray-700 rounded-md transition-colors ${action.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-200'}`}
         >
           {/* Fix: Explicitly type the props of the React.ReactElement to resolve the cloneElement overload error. */}
           {React.cloneElement(action.icon as React.ReactElement<{ className?: string }>, { className: 'h-4 w-4 text-gray-600' })}

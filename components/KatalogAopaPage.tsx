@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import BreadcrumbsAndTitle from './BreadcrumbsAndTitle';
 import AopTable from './AopTable';
 import DependentAccountsTable from './DependentAccountsTable';
-import type { AopItem, DependentAccount } from '../types';
+import type { AopItem, DependentAccount, Korisnik } from '../types';
 
 interface KatalogAopaPageProps {
   aopData: AopItem[];
@@ -13,8 +13,9 @@ interface KatalogAopaPageProps {
   onUpdateAop: (aop: AopItem) => void;
   onUpdateDependentAccount: (account: DependentAccount) => void;
   onSetDependentAccountsForAop: (accounts: Omit<DependentAccount, 'id'>[]) => void;
-  allDependentAccountsData: {[key: string]: DependentAccount[]}; // New prop
-  onCopyAllDependentAccounts: (selectedUserCodes: string[], allDependentAccounts: {[key: string]: DependentAccount[]}) => void; // New prop
+  allKorisnici: Korisnik[];
+  onCopyAllDependentAccounts: (selectedUserIds: string[]) => void;
+  formType: string;
 }
 
 const KatalogAopaPage: React.FC<KatalogAopaPageProps> = ({
@@ -25,12 +26,19 @@ const KatalogAopaPage: React.FC<KatalogAopaPageProps> = ({
   onUpdateAop,
   onUpdateDependentAccount,
   onSetDependentAccountsForAop,
-  allDependentAccountsData, // Destructure new prop
-  onCopyAllDependentAccounts // Destructure new prop
+  allKorisnici,
+  onCopyAllDependentAccounts,
+  formType
 }) => {
+  const isAopDescriptionRestricted = useMemo(() => {
+    if (!selectedAop || !selectedAop.opis) return false;
+    const lowerCaseDescription = selectedAop.opis.toLowerCase();
+    return lowerCaseDescription.includes('šifra') || lowerCaseDescription.includes('šifre');
+  }, [selectedAop]);
+
   return (
     <>
-      <BreadcrumbsAndTitle />
+      <BreadcrumbsAndTitle formType={formType} />
       <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto mt-2 lg:space-x-3 space-y-3 lg:space-y-0">
         <div className="flex-1 w-full overflow-x-auto lg:flex-[2_2_0%]">
           <AopTable
@@ -46,8 +54,9 @@ const KatalogAopaPage: React.FC<KatalogAopaPageProps> = ({
             accountsData={dependentAccountsData[selectedAop?.aop || ''] || []}
             onUpdateAccount={onUpdateDependentAccount}
             onSetAccounts={onSetDependentAccountsForAop}
-            allDependentAccountsData={allDependentAccountsData} // Pass new prop
-            onCopyAllDependentAccounts={onCopyAllDependentAccounts} // Pass new prop
+            allKorisnici={allKorisnici}
+            onCopyAllDependentAccounts={onCopyAllDependentAccounts}
+            isAopDescriptionRestricted={isAopDescriptionRestricted}
           />
         </div>
       </div>

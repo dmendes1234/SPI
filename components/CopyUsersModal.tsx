@@ -1,27 +1,18 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { XIcon, RefreshIcon, SaveIcon, ExcelIcon, CheckCircleIcon, InfoIcon } from '../constants';
 import Toolbar from './Toolbar';
-
-interface User {
-    sifra: string;
-    naziv: string;
-}
-
-const USERS: User[] = [
-    { sifra: '01', naziv: 'Korisnik d.o.o.' },
-    { sifra: '02', naziv: 'Testni korisnik' },
-];
+import type { Korisnik } from '../types'; // Import Korisnik type
 
 interface CopyUsersModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onCopy: (selectedUserCodes: string[]) => void;
+    onCopy: (selectedUserIds: string[]) => void; // Changed to return Korisnik IDs
+    users: Korisnik[]; // Accept users via props
 }
 
-const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy }) => {
+const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy, users }) => {
     const [filters, setFilters] = useState({ sifra: '', naziv: '' });
-    const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
+    const [selectedUsers, setSelectedUsers] = useState<Korisnik[]>([]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -45,40 +36,40 @@ const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy
     };
 
     const filteredUsers = useMemo(() => {
-        return USERS.filter(user =>
+        return users.filter(user =>
             user.sifra.toLowerCase().includes(filters.sifra.toLowerCase()) &&
             user.naziv.toLowerCase().includes(filters.naziv.toLowerCase())
         );
-    }, [filters]);
+    }, [filters, users]); // Depend on `users` prop
 
-    const handleToggleUser = (user: User) => {
+    const handleToggleUser = (user: Korisnik) => {
         setSelectedUsers(prev => {
-            const isSelected = prev.some(u => u.sifra === user.sifra);
+            const isSelected = prev.some(u => u.id === user.id);
             if (isSelected) {
-                return prev.filter(u => u.sifra !== user.sifra);
+                return prev.filter(u => u.id !== user.id);
             }
             return [...prev, user];
         });
     };
 
     const handleToggleSelectAll = () => {
-        const allVisibleSelected = filteredUsers.every(user => selectedUsers.some(u => u.sifra === user.sifra));
+        const allVisibleSelected = filteredUsers.every(user => selectedUsers.some(u => u.id === user.id));
 
         if (allVisibleSelected) {
             // Deselect all visible
-            setSelectedUsers(prev => prev.filter(user => !filteredUsers.some(fUser => fUser.sifra === user.sifra)));
+            setSelectedUsers(prev => prev.filter(user => !filteredUsers.some(fUser => fUser.id === user.id)));
         } else {
             // Select all visible (that are not already selected)
-            const newSelections = filteredUsers.filter(user => !selectedUsers.some(u => u.sifra === user.sifra));
+            const newSelections = filteredUsers.filter(user => !selectedUsers.some(u => u.id === user.id));
             setSelectedUsers(prev => [...prev, ...newSelections]);
         }
     };
 
     const handleConfirmCopy = () => {
-        onCopy(selectedUsers.map(user => user.sifra));
+        onCopy(selectedUsers.map(user => user.id)); // Return IDs
     };
 
-    const areAllFilteredSelected = filteredUsers.length > 0 && filteredUsers.every(user => selectedUsers.some(u => u.sifra === user.sifra));
+    const areAllFilteredSelected = filteredUsers.length > 0 && filteredUsers.every(user => selectedUsers.some(u => u.id === user.id));
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose} role="dialog" aria-modal="true">
@@ -137,14 +128,14 @@ const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy
                             <tbody className="divide-y divide-gray-200">
                                 {filteredUsers.map(user => (
                                     <tr
-                                        key={user.sifra}
+                                        key={user.id}
                                         onClick={() => handleToggleUser(user)}
-                                        className={`cursor-pointer hover:bg-blue-100 ${selectedUsers.some(u => u.sifra === user.sifra) ? 'bg-blue-200' : ''}`}
+                                        className={`cursor-pointer hover:bg-blue-100 ${selectedUsers.some(u => u.id === user.id) ? 'bg-blue-200' : ''}`}
                                     >
                                         <td className="p-2 text-center">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedUsers.some(u => u.sifra === user.sifra)}
+                                                checked={selectedUsers.some(u => u.id === user.id)}
                                                 onChange={() => handleToggleUser(user)}
                                                 onClick={(e) => e.stopPropagation()}
                                                 aria-label={`Select user ${user.naziv}`}

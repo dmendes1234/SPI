@@ -1,8 +1,13 @@
 
+
 import React from 'react';
 import { HomeIcon, ListBulletIcon } from '../constants';
 
-const BreadcrumbsAndTitle: React.FC = () => {
+interface BreadcrumbsAndTitleProps {
+  formType: string;
+}
+
+const BreadcrumbsAndTitle: React.FC<BreadcrumbsAndTitleProps> = ({ formType }) => {
   return (
     <div className="bg-white p-3 shadow-sm border border-gray-200 flex justify-between items-center">
         <div className="flex items-center space-x-2 text-gray-500">
@@ -13,7 +18,7 @@ const BreadcrumbsAndTitle: React.FC = () => {
             <span className="text-gray-800 font-semibold">Katalog AOP-a</span>
         </div>
         <div className="flex items-center space-x-4">
-            <span className="text-sm font-semibold text-gray-600">PR-RAS</span>
+            <span className="text-sm font-semibold text-gray-600">{formType}</span>
             <button className="p-1 text-gray-600 hover:text-gray-800">
                 <ListBulletIcon className="h-5 w-5" />
             </button>
