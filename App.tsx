@@ -16,6 +16,7 @@ import type { AopItem, DependentAccount, NavItem, Operator, Korisnik, PravaPrist
 import { INITIAL_AOP_DATA, INITIAL_DEPENDENT_ACCOUNTS_DATA } from './constants';
 import { defaultNavItems, app147NavItems, app099NavItems } from './data/navData';
 import { PR_RAS_AOP_DATA, OBVEZE_AOP_DATA } from './data/aopData';
+import { racunskiPlanData } from './data/racunskiPlanData';
 
 interface AppInfo {
   id: string;
@@ -173,38 +174,57 @@ function App() {
   };
 
   const handleInicijalnoPunjenjeAopa = useCallback((selectedCatalogs: string[]) => {
-      if (!selectedKorisnik) {
-          showToast('Nije odabran korisnik.', 'error');
-          return;
-      }
+    if (!selectedKorisnik) {
+        showToast('Nije odabran korisnik.', 'error');
+        return;
+    }
 
-      if (selectedCatalogs.includes('PR-RAS')) {
-          setAllAopDataByKorisnik(prev => ({
-              ...prev,
-              [selectedKorisnik.id]: PR_RAS_AOP_DATA,
-          }));
-          setAllDependentAccountsByKorisnik(prev => ({
-              ...prev,
-              [selectedKorisnik.id]: {},
-          }));
-          setSelectedAop(PR_RAS_AOP_DATA[0] || null);
-      }
+    if (selectedCatalogs.includes('PR-RAS')) {
+        setAllAopDataByKorisnik(prev => ({
+            ...prev,
+            [selectedKorisnik.id]: PR_RAS_AOP_DATA,
+        }));
 
-      if (selectedCatalogs.includes('OBVEZE')) {
-          setAllAopDataObvezeByKorisnik(prev => ({
-              ...prev,
-              [selectedKorisnik.id]: OBVEZE_AOP_DATA,
-          }));
-          setAllDependentAccountsObvezeByKorisnik(prev => ({
-              ...prev,
-              [selectedKorisnik.id]: {},
-          }));
-          setSelectedAopObveze(OBVEZE_AOP_DATA[0] || null);
-      }
+        const dependentAccountsForPrRas: { [aop: string]: DependentAccount[] } = {};
+        PR_RAS_AOP_DATA.forEach(aopItem => {
+            const lowerCaseOpis = aopItem.opis.toLowerCase();
+            if (!lowerCaseOpis.includes('šifra') && !lowerCaseOpis.includes('šifre')) {
+                const matchingAccounts = racunskiPlanData.filter(planItem =>
+                    planItem.konto.startsWith(aopItem.aop)
+                );
 
-      showToast(`Katalozi uspješno inicijalno napunjeni: ${selectedCatalogs.join(', ')}.`, 'success');
-      setIsInitAopModalOpen(false);
-  }, [selectedKorisnik, showToast]);
+                if (matchingAccounts.length > 0) {
+                    dependentAccountsForPrRas[aopItem.aop] = matchingAccounts.map((acc, index) => ({
+                        id: `${aopItem.aop}-${acc.konto}-${index}`,
+                        konto: acc.konto,
+                        nazivKonta: acc.opis
+                    }));
+                }
+            }
+        });
+
+        setAllDependentAccountsByKorisnik(prev => ({
+            ...prev,
+            [selectedKorisnik.id]: dependentAccountsForPrRas,
+        }));
+        setSelectedAop(PR_RAS_AOP_DATA[0] || null);
+    }
+
+    if (selectedCatalogs.includes('OBVEZE')) {
+        setAllAopDataObvezeByKorisnik(prev => ({
+            ...prev,
+            [selectedKorisnik.id]: OBVEZE_AOP_DATA,
+        }));
+        setAllDependentAccountsObvezeByKorisnik(prev => ({
+            ...prev,
+            [selectedKorisnik.id]: {},
+        }));
+        setSelectedAopObveze(OBVEZE_AOP_DATA[0] || null);
+    }
+
+    showToast(`Katalozi uspješno inicijalno napunjeni: ${selectedCatalogs.join(', ')}.`, 'success');
+    setIsInitAopModalOpen(false);
+}, [selectedKorisnik, showToast]);
 
 
   const navItems: NavItem[] = activeApp?.id === '147' 
