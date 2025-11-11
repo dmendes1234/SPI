@@ -1,4 +1,3 @@
-
 import type { NavItem } from '../types';
 
 export const app099NavItems: NavItem[] = [
@@ -46,7 +45,12 @@ export const app147NavItems: NavItem[] = [
     { label: "Pregledi" },
     { label: "Izvješća" },
     { label: "Parametri" },
-    { label: "Alati" },
+    { 
+        label: "Alati",
+        children: [
+            { label: "Inicijalno punjenje kataloga AOP-a", page: "inicijalno-punjenje-aopa" }
+        ] 
+    },
     { label: "Servis" },
     { label: "Pomoć" },
 ];

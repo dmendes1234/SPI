@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -13,9 +11,11 @@ import PravaPristupaPage from './components/PravaPristupaPage';
 import Toast from './components/Toast';
 import LoginPage from './components/LoginPage';
 import UserSelectionPage from './components/UserSelectionPage';
+import InicijalnoPunjenjeAopaModal from './components/InicijalnoPunjenjeAopaModal';
 import type { AopItem, DependentAccount, NavItem, Operator, Korisnik, PravaPristupa } from './types';
 import { INITIAL_AOP_DATA, INITIAL_DEPENDENT_ACCOUNTS_DATA } from './constants';
 import { defaultNavItems, app147NavItems, app099NavItems } from './data/navData';
+import { PR_RAS_AOP_DATA, OBVEZE_AOP_DATA } from './data/aopData';
 
 interface AppInfo {
   id: string;
@@ -77,6 +77,7 @@ function App() {
   const [pravaPristupa, setPravaPristupa] = useState<PravaPristupa>({
     '1': ['1', '2'] // Initial assignment: operator '1' has access to user '1' and '2'
   });
+  const [isInitAopModalOpen, setIsInitAopModalOpen] = useState(false);
 
   // Fix: Moved showToast definition before its usage to prevent "used before its declaration" error.
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'info') => {
@@ -113,28 +114,28 @@ function App() {
   useEffect(() => {
     if (selectedKorisnik) {
       setAllAopDataByKorisnik(prev => {
-        if (!prev[selectedKorisnik.id]) {
+        if (prev[selectedKorisnik.id] === undefined) {
           return { ...prev, [selectedKorisnik.id]: INITIAL_AOP_DATA };
         }
         return prev;
       });
       setAllDependentAccountsByKorisnik(prev => {
-        if (!prev[selectedKorisnik.id]) {
+        if (prev[selectedKorisnik.id] === undefined) {
           return { ...prev, [selectedKorisnik.id]: INITIAL_DEPENDENT_ACCOUNTS_DATA };
         }
         return prev;
       });
       setSelectedAop(prev => {
-        const newAopData = INITIAL_AOP_DATA;
-        if (!prev || !newAopData.some(item => item.id === prev.id)) {
-          return newAopData.find(item => item.id === 4) || newAopData[0] || null;
+        const currentUserAopData = allAopDataByKorisnik[selectedKorisnik.id] || INITIAL_AOP_DATA;
+        if (!prev || !currentUserAopData.some(item => item.id === prev.id)) {
+          return currentUserAopData[0] || null;
         }
         return prev;
       });
     } else {
       setSelectedAop(null);
     }
-  }, [selectedKorisnik]);
+  }, [selectedKorisnik, allAopDataByKorisnik]);
 
   // Effect for OBVEZE data
   useEffect(() => {
@@ -162,6 +163,48 @@ function App() {
       setSelectedAopObveze(null);
     }
   }, [selectedKorisnik, allAopDataObvezeByKorisnik]);
+
+  const handlePageChange = (page: string) => {
+    if (page === 'inicijalno-punjenje-aopa') {
+        setIsInitAopModalOpen(true);
+    } else {
+        setCurrentPage(page);
+    }
+  };
+
+  const handleInicijalnoPunjenjeAopa = useCallback((selectedCatalogs: string[]) => {
+      if (!selectedKorisnik) {
+          showToast('Nije odabran korisnik.', 'error');
+          return;
+      }
+
+      if (selectedCatalogs.includes('PR-RAS')) {
+          setAllAopDataByKorisnik(prev => ({
+              ...prev,
+              [selectedKorisnik.id]: PR_RAS_AOP_DATA,
+          }));
+          setAllDependentAccountsByKorisnik(prev => ({
+              ...prev,
+              [selectedKorisnik.id]: {},
+          }));
+          setSelectedAop(PR_RAS_AOP_DATA[0] || null);
+      }
+
+      if (selectedCatalogs.includes('OBVEZE')) {
+          setAllAopDataObvezeByKorisnik(prev => ({
+              ...prev,
+              [selectedKorisnik.id]: OBVEZE_AOP_DATA,
+          }));
+          setAllDependentAccountsObvezeByKorisnik(prev => ({
+              ...prev,
+              [selectedKorisnik.id]: {},
+          }));
+          setSelectedAopObveze(OBVEZE_AOP_DATA[0] || null);
+      }
+
+      showToast(`Katalozi uspješno inicijalno napunjeni: ${selectedCatalogs.join(', ')}.`, 'success');
+      setIsInitAopModalOpen(false);
+  }, [selectedKorisnik, showToast]);
 
 
   const navItems: NavItem[] = activeApp?.id === '147' 
@@ -329,7 +372,6 @@ function App() {
           return;
       }
       const copiedToNames: string[] = [];
-      // Fix: The function was incorrectly calling `setAllAopDataObvezeByKorisnik` instead of `setAllDependentAccountsObvezeByKorisnik`, causing a type mismatch.
       setAllDependentAccountsObvezeByKorisnik(prevAll => {
           const newAll = { ...prevAll };
           for (const targetKorisnikId of selectedTargetKorisnikIds) {
@@ -594,7 +636,7 @@ function App() {
           <Header 
             isNavOpen={isNavOpen} 
             setIsNavOpen={setIsNavOpen} 
-            setCurrentPage={setCurrentPage}
+            setCurrentPage={handlePageChange}
             onGoHome={handleGoHome}
             navItems={navItems}
             onLogout={handleManualLogout}
@@ -667,6 +709,13 @@ function App() {
           </div>
           <Footer />
         </div>
+        {isInitAopModalOpen && (
+            <InicijalnoPunjenjeAopaModal
+                isOpen={isInitAopModalOpen}
+                onClose={() => setIsInitAopModalOpen(false)}
+                onConfirm={handleInicijalnoPunjenjeAopa}
+            />
+        )}
         {toastMessage && (
           <Toast 
             message={toastMessage.message} 
