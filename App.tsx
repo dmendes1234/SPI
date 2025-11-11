@@ -8,6 +8,7 @@ import KatalogAopaPage from './components/KatalogAopaPage';
 import KatalogOperateraPage from './components/KatalogOperateraPage';
 import KatalogKorisnikaPage from './components/KatalogKorisnikaPage';
 import PravaPristupaPage from './components/PravaPristupaPage';
+import ParametriAplikacijePage from './components/ParametriAplikacijePage';
 import Toast from './components/Toast';
 import LoginPage from './components/LoginPage';
 import UserSelectionPage from './components/UserSelectionPage';
@@ -725,6 +726,9 @@ function App() {
                 onSave={handleSavePravaPristupa}
                 showToast={showToast}
               />
+            )}
+            {currentPage === 'parametri-aplikacije' && activeApp?.id === '147' && (
+              <ParametriAplikacijePage />
             )}
           </div>
           <Footer />

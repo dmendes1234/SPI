@@ -44,7 +44,12 @@ export const app147NavItems: NavItem[] = [
     { label: "Obrada" },
     { label: "Pregledi" },
     { label: "Izvješća" },
-    { label: "Parametri" },
+    { 
+        label: "Parametri",
+        children: [
+            { label: "Parametri aplikacije", page: "parametri-aplikacije" }
+        ]
+    },
     { 
         label: "Alati",
         children: [
