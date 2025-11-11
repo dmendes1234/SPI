@@ -127,7 +127,7 @@ function App() {
       setSelectedAop(prev => {
         const newAopData = INITIAL_AOP_DATA;
         if (!prev || !newAopData.some(item => item.id === prev.id)) {
-          return newAopData.find(item => item.id === 4) || newAopData[0];
+          return newAopData.find(item => item.id === 4) || newAopData[0] || null;
         }
         return prev;
       });
@@ -329,6 +329,7 @@ function App() {
           return;
       }
       const copiedToNames: string[] = [];
+      // Fix: The function was incorrectly calling `setAllAopDataObvezeByKorisnik` instead of `setAllDependentAccountsObvezeByKorisnik`, causing a type mismatch.
       setAllDependentAccountsObvezeByKorisnik(prevAll => {
           const newAll = { ...prevAll };
           for (const targetKorisnikId of selectedTargetKorisnikIds) {
