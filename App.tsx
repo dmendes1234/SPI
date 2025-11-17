@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -216,9 +217,49 @@ function App() {
             ...prev,
             [selectedKorisnik.id]: OBVEZE_AOP_DATA,
         }));
+        
+        const dependentAccountsForObveze: { [aop: string]: DependentAccount[] } = {};
+        
+        // Logic for V001 (rbr = 1)
+        const aopV001Item = OBVEZE_AOP_DATA.find(item => item.aop === 'V001');
+        if (aopV001Item) {
+            const matchingAccountsV001 = racunskiPlanData.filter(planItem =>
+                planItem.konto.startsWith('2') && !planItem.konto.startsWith('29')
+            );
+
+            if (matchingAccountsV001.length > 0) {
+                dependentAccountsForObveze[aopV001Item.aop] = matchingAccountsV001.map((acc, index) => ({
+                    id: `${aopV001Item.aop}-${acc.konto}-${index}`,
+                    konto: acc.konto,
+                    nazivKonta: acc.opis
+                }));
+            }
+        }
+
+        // Logic for rbr 5 to 13
+        const aopsToFill = OBVEZE_AOP_DATA.filter(item => item.rbr >= 5 && item.rbr <= 13);
+        
+        aopsToFill.forEach(aopItem => {
+            // For AOPs like 'N231', prefix is '231'. For 'N24', it's '24'.
+            const prefix = aopItem.aop.substring(1); 
+            if (prefix) {
+                const matchingAccounts = racunskiPlanData.filter(planItem => 
+                    planItem.konto.startsWith(prefix)
+                );
+
+                if (matchingAccounts.length > 0) {
+                    dependentAccountsForObveze[aopItem.aop] = matchingAccounts.map((acc, index) => ({
+                        id: `${aopItem.aop}-${acc.konto}-${index}`,
+                        konto: acc.konto,
+                        nazivKonta: acc.opis
+                    }));
+                }
+            }
+        });
+
         setAllDependentAccountsObvezeByKorisnik(prev => ({
             ...prev,
-            [selectedKorisnik.id]: {},
+            [selectedKorisnik.id]: dependentAccountsForObveze,
         }));
         setSelectedAopObveze(OBVEZE_AOP_DATA[0] || null);
     }
