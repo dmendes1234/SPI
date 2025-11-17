@@ -614,7 +614,7 @@ function App() {
 
     const resetTimer = () => {
       clearTimeout(inactivityTimer);
-      inactivityTimer = window.setTimeout(handleInactivityLogout, 60000);
+      inactivityTimer = window.setTimeout(handleInactivityLogout, 300000);
     };
 
     const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
