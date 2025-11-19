@@ -235,6 +235,24 @@ function App() {
                 }));
             }
         }
+        
+        // Logic for V003 (rbr = 3)
+        const aopV003Item = OBVEZE_AOP_DATA.find(item => item.aop === 'V003');
+        if (aopV003Item) {
+            const matchingAccountsV003 = racunskiPlanData.filter(planItem =>
+                planItem.konto.startsWith('23956') || 
+                planItem.konto.startsWith('23958') || 
+                planItem.konto.startsWith('23122')
+            );
+
+            if (matchingAccountsV003.length > 0) {
+                dependentAccountsForObveze[aopV003Item.aop] = matchingAccountsV003.map((acc, index) => ({
+                    id: `${aopV003Item.aop}-${acc.konto}-${index}`,
+                    konto: acc.konto,
+                    nazivKonta: acc.opis
+                }));
+            }
+        }
 
         // Logic for rbr 5 to 13
         const aopsToFill = OBVEZE_AOP_DATA.filter(item => item.rbr >= 5 && item.rbr <= 13);
