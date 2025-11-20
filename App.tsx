@@ -324,6 +324,32 @@ function App() {
             }
         });
 
+        // Logic for rbr 15 to 20
+        const newLogicMap: { [rbr: number]: (konto: string) => boolean } = {
+            15: (konto) => ['251', '253'].some(p => konto.startsWith(p)),
+            16: (konto) => konto.startsWith('254'),
+            17: (konto) => konto.startsWith('256'),
+            18: (konto) => ['262', '263', '267'].some(p => konto.startsWith(p)) || ['2643', '2644', '2645', '2653', '2654'].some(p => konto.startsWith(p)),
+            19: (konto) => konto.startsWith('261') || ['2646', '2647', '2648', '2655', '2656'].some(p => konto.startsWith(p)),
+            20: (konto) => konto.startsWith('27'),
+        };
+
+        for (let rbr = 15; rbr <= 20; rbr++) {
+            const aopItem = OBVEZE_AOP_DATA.find(item => item.rbr === rbr);
+            const filterLogic = newLogicMap[rbr];
+
+            if (aopItem && filterLogic) {
+                const matchingAccounts = racunskiPlanData.filter(planItem => filterLogic(planItem.konto));
+                if (matchingAccounts.length > 0) {
+                    dependentAccountsForObveze[aopItem.aop] = matchingAccounts.map((acc, index) => ({
+                        id: `${aopItem.aop}-${acc.konto}-${index}-${Math.random()}`,
+                        konto: acc.konto,
+                        nazivKonta: acc.opis
+                    }));
+                }
+            }
+        }
+
         setAllDependentAccountsObvezeByKorisnik(prev => ({
             ...prev,
             [selectedKorisnik.id]: dependentAccountsForObveze,
