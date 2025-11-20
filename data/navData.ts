@@ -1,4 +1,3 @@
-
 import type { NavItem } from '../types';
 
 export const app099NavItems: NavItem[] = [
@@ -31,12 +30,11 @@ export const app147NavItems: NavItem[] = [
                 label: "Zakonski obrasci",
                 children: [
                     {
-                        label: "PR-RAS",
-                        children: [{ label: "Katalog AOP-a", page: "katalog-aopa" }],
-                    },
-                    {
-                        label: "OBVEZE",
-                        children: [{ label: "Katalog AOP-a", page: "katalog-aopa-obveze" }],
+                        label: "Katalog AOP-a",
+                        children: [
+                            { label: "PR-RAS", page: "katalog-aopa" },
+                            { label: "OBVEZE", page: "katalog-aopa-obveze" },
+                        ],
                     },
                 ],
             },
