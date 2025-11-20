@@ -27,15 +27,10 @@ export const app147NavItems: NavItem[] = [
         label: "Katalozi",
         children: [
             {
-                label: "Zakonski obrasci",
+                label: "Katalog AOP-a",
                 children: [
-                    {
-                        label: "Katalog AOP-a",
-                        children: [
-                            { label: "PR-RAS", page: "katalog-aopa" },
-                            { label: "OBVEZE", page: "katalog-aopa-obveze" },
-                        ],
-                    },
+                    { label: "PR-RAS", page: "katalog-aopa" },
+                    { label: "OBVEZE", page: "katalog-aopa-obveze" },
                 ],
             },
             { label: "Katalog posebnih događaja", page: "katalog-posebnih-dogadaj" }
