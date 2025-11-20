@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { racunskiPlanData } from '../data/racunskiPlanData';
 import type { RacunskiPlanItem } from '../types';
@@ -10,9 +9,18 @@ interface RacunskiPlanModalProps {
   onClose: () => void;
   onSelect: (accounts: RacunskiPlanItem[]) => void;
   initiallySelectedAccounts: RacunskiPlanItem[];
+  isSingleSelect?: boolean; // New prop
+  filterMinLength?: number; // New prop
 }
 
-const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, onSelect, initiallySelectedAccounts }) => {
+const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ 
+    isOpen, 
+    onClose, 
+    onSelect, 
+    initiallySelectedAccounts, 
+    isSingleSelect = false, 
+    filterMinLength = 0 
+}) => {
   const [filters, setFilters] = useState({ konto: '', opis: ''});
   const [taggedAccounts, setTaggedAccounts] = useState<RacunskiPlanItem[]>([]);
   const [showTaggedOnly, setShowTaggedOnly] = useState(false);
@@ -33,16 +41,21 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
 
   const filteredData = useMemo(() => {
     let data = racunskiPlanData;
+    
+    if (filterMinLength > 0) {
+        data = data.filter(item => item.konto.length >= filterMinLength);
+    }
+
     if (showTaggedOnly) {
         const taggedKonti = new Set(taggedAccounts.map(a => a.konto));
-        data = racunskiPlanData.filter(item => taggedKonti.has(item.konto));
+        data = data.filter(item => taggedKonti.has(item.konto));
     }
     
     return data.filter(item => 
         item.konto.toLowerCase().includes(filters.konto.toLowerCase()) &&
         item.opis.toLowerCase().includes(filters.opis.toLowerCase())
     );
-  }, [filters, taggedAccounts, showTaggedOnly]);
+  }, [filters, taggedAccounts, showTaggedOnly, filterMinLength]);
   
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -50,6 +63,10 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
   };
   
   const handleToggleAccount = (account: RacunskiPlanItem) => {
+    if (isSingleSelect) {
+        setTaggedAccounts([account]);
+        return;
+    }
     setTaggedAccounts(prev => {
         const isTagged = prev.some(a => a.konto === account.konto);
         if (isTagged) {
@@ -60,6 +77,8 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
   };
 
   const handleToggleSelectAll = () => {
+      if (isSingleSelect) return; // Disable select all for single select mode
+
       // Toggles only the visible, filtered data
       const currentKonti = taggedAccounts.map(a => a.konto);
       const filteredKonti = filteredData.map(a => a.konto);
@@ -135,7 +154,7 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
   const areAllFilteredSelected = filteredData.length > 0 && filteredData.every(item => taggedAccounts.some(a => a.konto === item.konto));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
       <div className="bg-gray-100 rounded-sm shadow-xl w-full max-w-4xl h-full flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="bg-slate-700 text-white p-2 flex justify-between items-center rounded-t-sm">
           <h3 className="text-sm font-semibold">Odabir - Računski plan</h3>
@@ -154,12 +173,14 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
               <thead className="sticky top-0 bg-slate-600 text-white z-10">
                 <tr>
                   <th className="p-2 font-semibold w-10">
-                    <input 
-                      type="checkbox"
-                      onChange={handleToggleSelectAll}
-                      checked={areAllFilteredSelected}
-                      aria-label="Select all visible"
-                    />
+                    {!isSingleSelect && (
+                        <input 
+                        type="checkbox"
+                        onChange={handleToggleSelectAll}
+                        checked={areAllFilteredSelected}
+                        aria-label="Select all visible"
+                        />
+                    )}
                   </th>
                   <th className="p-2 font-semibold w-28">Konto</th>
                   <th className="p-2 font-semibold">Opis</th>
@@ -204,14 +225,18 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ isOpen, onClose, 
 
         <div className="p-3 bg-gray-100 border-t flex justify-between items-center">
             <div className="flex items-center space-x-2">
-                <input 
-                    type="checkbox"
-                    id="showTaggedOnlyCheckbox"
-                    checked={showTaggedOnly}
-                    onChange={(e) => setShowTaggedOnly(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="showTaggedOnlyCheckbox" className="text-xs text-gray-700 cursor-pointer">Prikaži samo označene</label>
+                {!isSingleSelect && (
+                    <>
+                        <input 
+                            type="checkbox"
+                            id="showTaggedOnlyCheckbox"
+                            checked={showTaggedOnly}
+                            onChange={(e) => setShowTaggedOnly(e.target.checked)}
+                            className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label htmlFor="showTaggedOnlyCheckbox" className="text-xs text-gray-700 cursor-pointer">Prikaži samo označene</label>
+                    </>
+                )}
             </div>
             <div className="flex items-center space-x-2">
                 <button onClick={handleSelect} className="flex items-center space-x-1 px-3 py-1.5 text-xs text-white bg-blue-600 rounded-md hover:bg-blue-700">

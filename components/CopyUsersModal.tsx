@@ -72,7 +72,7 @@ const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy
     const areAllFilteredSelected = filteredUsers.length > 0 && filteredUsers.every(user => selectedUsers.some(u => u.id === user.id));
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose} role="dialog" aria-modal="true">
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" role="dialog" aria-modal="true">
             <div className="bg-gray-100 rounded-sm shadow-xl w-full max-w-2xl h-auto max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="bg-slate-700 text-white p-2 flex justify-between items-center rounded-t-sm">
                     <h3 className="text-sm font-semibold">Prijepis na korisnika</h3>

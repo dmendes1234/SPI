@@ -130,7 +130,7 @@ const OdabirKorisnikaModal: React.FC<OdabirKorisnikaModalProps> = ({ isOpen, onC
   const areAllFilteredSelected = filteredData.length > 0 && filteredData.every(item => taggedKorisnici.some(k => k.id === item.id));
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
       <div className="bg-gray-100 rounded-sm shadow-xl w-full max-w-4xl h-full flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="bg-slate-700 text-white p-2 flex justify-between items-center rounded-t-sm">
           <h3 className="text-sm font-semibold">Odabir - Korisnici</h3>

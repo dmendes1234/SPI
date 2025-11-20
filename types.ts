@@ -1,3 +1,4 @@
+
 // Fix: Import React to provide types for React.ReactNode
 import type React from 'react';
 
@@ -49,3 +50,35 @@ export interface Operator {
 export type PravaPristupa = {
   [operatorId: string]: string[]; // An object where keys are operator IDs and values are arrays of user IDs
 };
+
+// New Types for Katalog posebnih događaja
+export interface Dogadjaj {
+  id: string;
+  sifra: string;
+  naziv: string;
+}
+
+export interface VrstaDokumenta {
+  id: string;
+  sifra: string;
+  naziv: string;
+}
+
+export interface Pozicija {
+  id: string;
+  sifra: string;
+  naziv: string;
+}
+
+export interface StavkaKontiranja {
+  id: string;
+  rbr: number;
+  dogadjajId: string;
+  vrstaDokumentaId: string;
+  pozicijaId: string | null; // ID of the referenced Pozicija
+  racun: string;
+  racunNaziv: string;
+  strana: 'D' | 'P';
+  postotak: number;
+  prijepis: string[]; // List of checked values e.g. ['Organizacijska', 'Odjel']
+}

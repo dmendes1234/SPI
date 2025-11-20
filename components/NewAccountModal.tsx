@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { AopItem, DependentAccount, RacunskiPlanItem } from '../types';
 import { XIcon, CheckIcon, XCircleIcon } from '../constants';
@@ -51,7 +50,6 @@ const NewAccountModal: React.FC<NewAccountModalProps> = ({ isOpen, onClose, onSa
     <>
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" 
-        onClick={onClose} 
         role="dialog" 
         aria-modal="true"
       >

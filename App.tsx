@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -14,11 +13,15 @@ import Toast from './components/Toast';
 import LoginPage from './components/LoginPage';
 import UserSelectionPage from './components/UserSelectionPage';
 import InicijalnoPunjenjeAopaModal from './components/InicijalnoPunjenjeAopaModal';
-import type { AopItem, DependentAccount, NavItem, Operator, Korisnik, PravaPristupa } from './types';
+import KatalogPosebnihDogadjanjaPage from './components/KatalogPosebnihDogadjanjaPage';
+import type { AopItem, DependentAccount, NavItem, Operator, Korisnik, PravaPristupa, Dogadjaj, VrstaDokumenta, Pozicija, StavkaKontiranja } from './types';
 import { INITIAL_AOP_DATA, INITIAL_DEPENDENT_ACCOUNTS_DATA } from './constants';
 import { defaultNavItems, app147NavItems, app099NavItems } from './data/navData';
 import { PR_RAS_AOP_DATA, OBVEZE_AOP_DATA } from './data/aopData';
 import { racunskiPlanData } from './data/racunskiPlanData';
+
+// Generator for IDs since we don't have uuid
+const generateId = () => Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 
 interface AppInfo {
   id: string;
@@ -63,6 +66,27 @@ function App() {
   );
   const [selectedAopObveze, setSelectedAopObveze] = useState<AopItem | null>(null);
   
+  // State for Katalog posebnih događaja
+  // Dogadjaji are per user
+  const [allDogadjajiByKorisnik, setAllDogadjajiByKorisnik] = useState<{[korisnikId: string]: Dogadjaj[]}>({});
+  // Vrsta dokumenta is Global
+  const [vrsteDokumenata, setVrsteDokumenata] = useState<VrstaDokumenta[]>([
+      { id: '1', sifra: 'URA', naziv: 'Ulazni račun' },
+      { id: '2', sifra: 'IRA', naziv: 'Izlazni račun' },
+      { id: '3', sifra: 'UGO', naziv: 'Ugovor' },
+  ]);
+  // Pozicije are Global
+  const [pozicije, setPozicije] = useState<Pozicija[]>([
+      { id: '1', sifra: 'P0001', naziv: 'Pozicija P0001' },
+      { id: '2', sifra: 'P0002', naziv: 'Pozicija P0002' },
+      { id: '3', sifra: 'P0003', naziv: 'Pozicija P0003' },
+      { id: '4', sifra: 'R0001', naziv: 'Pozicija R0001' },
+      { id: '5', sifra: 'R0002', naziv: 'Pozicija R0002' },
+      { id: '6', sifra: 'R0003', naziv: 'Pozicija R0003' },
+  ]);
+  // Stavke are per user (since they belong to events which are per user)
+  const [allStavkeByKorisnik, setAllStavkeByKorisnik] = useState<{[korisnikId: string]: StavkaKontiranja[]}>({});
+
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
@@ -111,6 +135,17 @@ function App() {
       if (!selectedKorisnik) return {};
       return allDependentAccountsObvezeByKorisnik[selectedKorisnik.id] || {};
   }, [allDependentAccountsObvezeByKorisnik, selectedKorisnik]);
+  
+  // Derived state for Posebni Događaji
+  const currentDogadjaji = useMemo(() => {
+      if (!selectedKorisnik) return [];
+      return allDogadjajiByKorisnik[selectedKorisnik.id] || [];
+  }, [allDogadjajiByKorisnik, selectedKorisnik]);
+  
+  const currentStavke = useMemo(() => {
+      if (!selectedKorisnik) return [];
+      return allStavkeByKorisnik[selectedKorisnik.id] || [];
+  }, [allStavkeByKorisnik, selectedKorisnik]);
 
 
   // Effect for PR-RAS data
@@ -135,6 +170,20 @@ function App() {
         }
         return prev;
       });
+      // Init events
+      setAllDogadjajiByKorisnik(prev => {
+          if (!prev[selectedKorisnik.id]) {
+              return { ...prev, [selectedKorisnik.id]: [] };
+          }
+          return prev;
+      });
+      setAllStavkeByKorisnik(prev => {
+        if (!prev[selectedKorisnik.id]) {
+            return { ...prev, [selectedKorisnik.id]: [] };
+        }
+        return prev;
+      });
+
     } else {
       setSelectedAop(null);
     }
@@ -474,6 +523,83 @@ function App() {
       }
   }, [selectedKorisnik, allDependentAccountsObvezeByKorisnik, korisnici, showToast]);
 
+  // Handlers for Special Events
+  const handleSaveDogadjaj = (d: Omit<Dogadjaj, 'id'>) => {
+      if (!selectedKorisnik) return;
+      const newEvent = { ...d, id: generateId() };
+      setAllDogadjajiByKorisnik(prev => ({
+          ...prev,
+          [selectedKorisnik.id]: [...(prev[selectedKorisnik.id] || []), newEvent]
+      }));
+      showToast('Događaj dodan', 'success');
+      return newEvent;
+  };
+  const handleUpdateDogadjaj = (d: Dogadjaj) => {
+      if (!selectedKorisnik) return;
+      setAllDogadjajiByKorisnik(prev => ({
+          ...prev,
+          [selectedKorisnik.id]: (prev[selectedKorisnik.id] || []).map(ev => ev.id === d.id ? d : ev)
+      }));
+      showToast('Događaj ažuriran', 'success');
+  };
+  const handleDeleteDogadjaj = (id: string) => {
+      if (!selectedKorisnik) return;
+      setAllDogadjajiByKorisnik(prev => ({
+          ...prev,
+          [selectedKorisnik.id]: (prev[selectedKorisnik.id] || []).filter(ev => ev.id !== id)
+      }));
+      // Clean up related items? Optional but good practice
+      setAllStavkeByKorisnik(prev => ({
+          ...prev,
+          [selectedKorisnik.id]: (prev[selectedKorisnik.id] || []).filter(s => s.dogadjajId !== id)
+      }));
+      showToast('Događaj obrisan', 'success');
+  };
+
+  const handleSaveVrstaDokumenta = (vd: Omit<VrstaDokumenta, 'id'>) => {
+      setVrsteDokumenata(prev => [...prev, { ...vd, id: generateId() }]);
+  };
+  const handleUpdateVrstaDokumenta = (vd: VrstaDokumenta) => {
+      setVrsteDokumenata(prev => prev.map(v => v.id === vd.id ? vd : v));
+  };
+  const handleDeleteVrstaDokumenta = (id: string) => {
+      setVrsteDokumenata(prev => prev.filter(v => v.id !== id));
+  };
+
+  const handleSavePozicija = (p: Omit<Pozicija, 'id'>) => {
+      setPozicije(prev => [...prev, { ...p, id: generateId() }]);
+  };
+  const handleUpdatePozicija = (p: Pozicija) => {
+      setPozicije(prev => prev.map(poz => poz.id === p.id ? p : poz));
+  };
+  const handleDeletePozicija = (id: string) => {
+      setPozicije(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleSaveStavka = (s: Omit<StavkaKontiranja, 'id' | 'rbr'>) => {
+    if (!selectedKorisnik) return;
+    setAllStavkeByKorisnik(prev => {
+        const currentStavke = prev[selectedKorisnik.id] || [];
+        const maxRbr = currentStavke.length > 0 ? Math.max(...currentStavke.map(i => i.rbr)) : 0;
+        const newItem = { ...s, id: generateId(), rbr: maxRbr + 1 };
+        return { ...prev, [selectedKorisnik.id]: [...currentStavke, newItem] };
+    });
+  };
+  const handleUpdateStavka = (s: StavkaKontiranja) => {
+    if (!selectedKorisnik) return;
+    setAllStavkeByKorisnik(prev => ({
+        ...prev,
+        [selectedKorisnik.id]: (prev[selectedKorisnik.id] || []).map(item => item.id === s.id ? s : item)
+    }));
+  };
+  const handleDeleteStavka = (id: string) => {
+    if (!selectedKorisnik) return;
+    setAllStavkeByKorisnik(prev => ({
+        ...prev,
+        [selectedKorisnik.id]: (prev[selectedKorisnik.id] || []).filter(item => item.id !== id)
+    }));
+  };
+
   const handleSelectApp = (appInfo: AppInfo) => {
     setActiveApp(appInfo);
     setCurrentPage('main');
@@ -760,6 +886,27 @@ function App() {
                 allKorisnici={korisnici}
                 onCopyAllDependentAccounts={handleCopyAllDependentAccountsObveze}
               />
+            )}
+            {currentPage === 'katalog-posebnih-dogadaj' && activeApp?.id === '147' && (
+                <KatalogPosebnihDogadjanjaPage
+                    selectedKorisnik={selectedKorisnik}
+                    dogadjaji={currentDogadjaji}
+                    vrsteDokumenata={vrsteDokumenata}
+                    pozicije={pozicije}
+                    stavke={currentStavke}
+                    onSaveDogadjaj={handleSaveDogadjaj}
+                    onUpdateDogadjaj={handleUpdateDogadjaj}
+                    onDeleteDogadjaj={handleDeleteDogadjaj}
+                    onSaveVrstaDokumenta={handleSaveVrstaDokumenta}
+                    onUpdateVrstaDokumenta={handleUpdateVrstaDokumenta}
+                    onDeleteVrstaDokumenta={handleDeleteVrstaDokumenta}
+                    onSavePozicija={handleSavePozicija}
+                    onUpdatePozicija={handleUpdatePozicija}
+                    onDeletePozicija={handleDeletePozicija}
+                    onSaveStavka={handleSaveStavka}
+                    onUpdateStavka={handleUpdateStavka}
+                    onDeleteStavka={handleDeleteStavka}
+                />
             )}
             {currentPage === 'katalog-operatera' && activeApp?.id === '099' && (
               <KatalogOperateraPage

@@ -22,7 +22,7 @@ const InicijalnoPunjenjeAopaModal: React.FC<InicijalnoPunjenjeAopaModalProps> = 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" onClick={onClose} role="dialog" aria-modal="true">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4" role="dialog" aria-modal="true">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
                 <div className="flex justify-between items-center border-b p-4">
                     <h3 className="text-lg font-semibold text-gray-800">Inicijalno punjenje kataloga AOP-a</h3>

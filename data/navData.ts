@@ -1,3 +1,4 @@
+
 import type { NavItem } from '../types';
 
 export const app099NavItems: NavItem[] = [
@@ -39,6 +40,7 @@ export const app147NavItems: NavItem[] = [
                     },
                 ],
             },
+            { label: "Katalog posebnih događaja", page: "katalog-posebnih-dogadaj" }
         ],
     },
     { label: "Obrada" },
