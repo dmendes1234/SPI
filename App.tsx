@@ -580,7 +580,8 @@ function App() {
     if (!selectedKorisnik) return;
     setAllStavkeByKorisnik(prev => {
         const currentStavke = prev[selectedKorisnik.id] || [];
-        const maxRbr = currentStavke.length > 0 ? Math.max(...currentStavke.map(i => i.rbr)) : 0;
+        const groupStavke = currentStavke.filter(item => item.dogadjajId === s.dogadjajId && item.vrstaDokumentaId === s.vrstaDokumentaId);
+        const maxRbr = groupStavke.length > 0 ? Math.max(...groupStavke.map(i => i.rbr)) : 0;
         const newItem = { ...s, id: generateId(), rbr: maxRbr + 1 };
         return { ...prev, [selectedKorisnik.id]: [...currentStavke, newItem] };
     });
@@ -594,10 +595,37 @@ function App() {
   };
   const handleDeleteStavka = (id: string) => {
     if (!selectedKorisnik) return;
-    setAllStavkeByKorisnik(prev => ({
-        ...prev,
-        [selectedKorisnik.id]: (prev[selectedKorisnik.id] || []).filter(item => item.id !== id)
-    }));
+
+    setAllStavkeByKorisnik(prev => {
+        const currentStavkeForUser = prev[selectedKorisnik.id] || [];
+        
+        const itemToDelete = currentStavkeForUser.find(item => item.id === id);
+        if (!itemToDelete) {
+            return prev;
+        }
+        
+        const { dogadjajId, vrstaDokumentaId } = itemToDelete;
+
+        const remainingStavke = currentStavkeForUser.filter(item => item.id !== id);
+        
+        const groupToRenumber = remainingStavke
+            .filter(s => s.dogadjajId === dogadjajId && s.vrstaDokumentaId === vrstaDokumentaId)
+            .sort((a, b) => a.rbr - b.rbr);
+
+        const otherItems = remainingStavke
+            .filter(s => s.dogadjajId !== dogadjajId || s.vrstaDokumentaId !== vrstaDokumentaId);
+            
+        const renumberedGroup = groupToRenumber.map((item, index) => ({
+            ...item,
+            rbr: index + 1,
+        }));
+        
+        return {
+            ...prev,
+            [selectedKorisnik.id]: [...otherItems, ...renumberedGroup],
+        };
+    });
+    showToast('Stavka kontiranja obrisana.', 'success');
   };
 
   const handleSelectApp = (appInfo: AppInfo) => {
