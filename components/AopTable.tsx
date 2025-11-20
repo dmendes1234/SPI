@@ -3,7 +3,7 @@ import type { AopItem } from '../types';
 import Toolbar from './Toolbar';
 import { RefreshIcon, SaveIcon, ExcelIcon } from '../constants';
 import ContextMenu from './ContextMenu';
-import Modal from './Modal';
+import NotImplementedModal from './NotImplementedModal';
 
 interface AopTableProps {
   aopData: AopItem[];
@@ -30,13 +30,14 @@ const TableFilterInput: React.FC<TableFilterInputProps> = ({ value, onChange, ar
 
 const AopTable: React.FC<AopTableProps> = ({ aopData, selectedAop, onSelectAop, onUpdateAop }) => {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: AopItem } | null>(null);
+  const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
   
   const [filters, setFilters] = useState({ rbr: '', aop: '', opis: '' });
 
   const toolbarActions = [
     { label: 'Osvježi', icon: <RefreshIcon /> },
     { label: 'Spremi pretragu', icon: <SaveIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
   ];
 
   const handleFilterChange = (name: string, value: string) => {
@@ -121,6 +122,7 @@ const AopTable: React.FC<AopTableProps> = ({ aopData, selectedAop, onSelectAop, 
           <div></div> 
         </ContextMenu>
       )}
+      <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { racunskiPlanData } from '../data/racunskiPlanData';
 import type { RacunskiPlanItem } from '../types';
 import { XIcon, RefreshIcon, SaveIcon, ExcelIcon, CheckCircleIcon, InfoIcon } from '../constants';
 import Toolbar from './Toolbar';
+import NotImplementedModal from './NotImplementedModal';
 
 interface RacunskiPlanModalProps {
   isOpen: boolean;
@@ -24,11 +25,12 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
   const [filters, setFilters] = useState({ konto: '', opis: ''});
   const [taggedAccounts, setTaggedAccounts] = useState<RacunskiPlanItem[]>([]);
   const [showTaggedOnly, setShowTaggedOnly] = useState(false);
+  const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
 
   const toolbarActions = [
     { label: 'Osvježi', icon: <RefreshIcon /> },
     { label: 'Spremi pretragu', icon: <SaveIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
   ];
 
   useEffect(() => {
@@ -249,6 +251,7 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
                 </button>
             </div>
         </div>
+        <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
       </div>
     </div>
   );

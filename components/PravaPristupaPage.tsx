@@ -4,6 +4,7 @@ import Toolbar from './Toolbar';
 import { EditIcon, RefreshIcon, ExcelIcon } from '../constants';
 import type { Operator, Korisnik, PravaPristupa } from '../types';
 import OdabirKorisnikaModal from './OdabirKorisnikaModal';
+import NotImplementedModal from './NotImplementedModal';
 
 interface PravaPristupaPageProps {
   operators: Operator[];
@@ -17,6 +18,7 @@ const PravaPristupaPage: React.FC<PravaPristupaPageProps> = ({ operators, korisn
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(operators.length > 0 ? operators[0] : null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [operatorFilters, setOperatorFilters] = useState({ ime: '', prezime: '', korisnickoIme: '' });
+  const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
 
   const vezaniKorisnici = useMemo(() => {
     if (!selectedOperator) return [];
@@ -36,7 +38,7 @@ const PravaPristupaPage: React.FC<PravaPristupaPageProps> = ({ operators, korisn
   const toolbarActions = [
     { label: 'Promjena', icon: <EditIcon />, onClick: () => { if (selectedOperator) setIsModalOpen(true); } },
     { label: 'Osvježi', icon: <RefreshIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
   ];
 
   const filteredOperators = useMemo(() => {
@@ -136,6 +138,7 @@ const PravaPristupaPage: React.FC<PravaPristupaPageProps> = ({ operators, korisn
           initiallySelectedKorisnici={vezaniKorisnici}
         />
       )}
+      <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
     </>
   );
 };

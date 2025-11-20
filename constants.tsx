@@ -131,6 +131,11 @@ export const InfoIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const WrenchScrewdriverIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.474-4.474c-.039-.58-.182-1.157-.442-1.694a4.5 4.5 0 00-3.053-3.053c-.537-.26-1.114-.403-1.694-.442a4.5 4.5 0 00-4.474 4.474c.039.58.182 1.157.442 1.694L9.566 9.566c-.537.26-1.114.403-1.694.442a4.5 4.5 0 00-4.474 4.474c.039.58.182 1.157.442 1.694a4.5 4.5 0 003.053 3.053c.537.26 1.114.403 1.694.442a4.5 4.5 0 004.474-4.474" />
+    </svg>
+);
 
 export const INITIAL_AOP_DATA: AopItem[] = [];
 

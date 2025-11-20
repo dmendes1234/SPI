@@ -5,6 +5,7 @@ import { NewIcon, EditIcon, DeleteIcon, RefreshIcon, ExcelIcon } from '../consta
 import type { Operator } from '../types';
 import OperatorModal from './OperatorModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import NotImplementedModal from './NotImplementedModal';
 
 interface KatalogOperateraPageProps {
   operators: Operator[];
@@ -19,6 +20,7 @@ const KatalogOperateraPage: React.FC<KatalogOperateraPageProps> = ({ operators, 
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
 
   useEffect(() => {
     // If an operator is selected, ensure it's up-to-date with the operators list from props.
@@ -32,7 +34,7 @@ const KatalogOperateraPage: React.FC<KatalogOperateraPageProps> = ({ operators, 
         // If no operator is selected, default to the first one.
         setSelectedOperator(operators[0]);
     }
-  }, [operators]);
+  }, [operators, selectedOperator]);
 
   const filteredOperators = useMemo(() => {
     return operators.filter(op =>
@@ -60,7 +62,7 @@ const KatalogOperateraPage: React.FC<KatalogOperateraPageProps> = ({ operators, 
     { label: 'Promjena', icon: <EditIcon />, onClick: () => { if (selectedOperator) setIsEditModalOpen(true) } },
     { label: 'Brisanje', icon: <DeleteIcon />, onClick: () => { if (selectedOperator) setIsDeleteModalOpen(true) } },
     { label: 'Osvježi', icon: <RefreshIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
   ];
 
   return (
@@ -125,6 +127,7 @@ const KatalogOperateraPage: React.FC<KatalogOperateraPageProps> = ({ operators, 
           itemType="operatera"
         />
       )}
+      <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
     </>
   );
 };

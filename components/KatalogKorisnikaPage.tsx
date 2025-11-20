@@ -5,6 +5,7 @@ import { NewIcon, EditIcon, DeleteIcon, RefreshIcon, ExcelIcon } from '../consta
 import type { Korisnik } from '../types';
 import KorisnikModal from './KorisnikModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import NotImplementedModal from './NotImplementedModal';
 
 interface KatalogKorisnikaPageProps {
   korisnici: Korisnik[];
@@ -19,6 +20,7 @@ const KatalogKorisnikaPage: React.FC<KatalogKorisnikaPageProps> = ({ korisnici, 
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
 
   useEffect(() => {
     if (selectedKorisnik) {
@@ -53,7 +55,7 @@ const KatalogKorisnikaPage: React.FC<KatalogKorisnikaPageProps> = ({ korisnici, 
     { label: 'Promjena', icon: <EditIcon />, onClick: () => { if (selectedKorisnik) setIsEditModalOpen(true) } },
     { label: 'Brisanje', icon: <DeleteIcon />, onClick: () => { if (selectedKorisnik) setIsDeleteModalOpen(true) } },
     { label: 'Osvježi', icon: <RefreshIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
   ];
 
   return (
@@ -115,6 +117,7 @@ const KatalogKorisnikaPage: React.FC<KatalogKorisnikaPageProps> = ({ korisnici, 
           itemType="korisnika"
         />
       )}
+      <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
     </>
   );
 };

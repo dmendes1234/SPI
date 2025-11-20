@@ -3,9 +3,9 @@ import type { AopItem, DependentAccount, Korisnik } from '../types';
 import Toolbar from './Toolbar';
 import { EditIcon, RefreshIcon, SaveIcon, ExcelIcon, UploadIcon } from '../constants';
 import ContextMenu from './ContextMenu';
-import Modal from './Modal';
 import NewAccountModal from './NewAccountModal';
 import CopyUsersModal from './CopyUsersModal';
+import NotImplementedModal from './NotImplementedModal';
 
 interface DependentAccountsTableProps {
   selectedAop: AopItem | null;
@@ -39,6 +39,7 @@ const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selecte
   
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false);
   const [isCopyUsersModalOpen, setIsCopyUsersModalOpen] = useState(false);
+  const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
   const [filters, setFilters] = useState({ konto: '', nazivKonta: '' });
 
   useEffect(() => {
@@ -67,7 +68,7 @@ const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selecte
     },
     { label: 'Osvježi', icon: <RefreshIcon /> },
     { label: 'Spremi pretragu', icon: <SaveIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
     { label: 'Prijepis podataka na druge korisnike', icon: <UploadIcon />, onClick: () => setIsCopyUsersModalOpen(true) },
   ];
 
@@ -165,6 +166,7 @@ const DependentAccountsTable: React.FC<DependentAccountsTableProps> = ({ selecte
           users={allKorisnici} // Pass the full list of Korisnik objects
         />
       )}
+      <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
     </div>
   );
 };

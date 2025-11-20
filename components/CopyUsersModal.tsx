@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { XIcon, RefreshIcon, SaveIcon, ExcelIcon, CheckCircleIcon, InfoIcon } from '../constants';
 import Toolbar from './Toolbar';
 import type { Korisnik } from '../types'; // Import Korisnik type
+import NotImplementedModal from './NotImplementedModal';
 
 interface CopyUsersModalProps {
     isOpen: boolean;
@@ -13,6 +14,7 @@ interface CopyUsersModalProps {
 const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy, users }) => {
     const [filters, setFilters] = useState({ sifra: '', naziv: '' });
     const [selectedUsers, setSelectedUsers] = useState<Korisnik[]>([]);
+    const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
 
     useEffect(() => {
         if (!isOpen) {
@@ -27,7 +29,7 @@ const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy
     const toolbarActions = [
         { label: 'Osvježi', icon: <RefreshIcon /> },
         { label: 'Spremi pretragu', icon: <SaveIcon /> },
-        { label: 'Preuzmi u Excel-u', icon: <ExcelIcon /> },
+        { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
     ];
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +167,7 @@ const CopyUsersModal: React.FC<CopyUsersModalProps> = ({ isOpen, onClose, onCopy
                         <span>Izlaz</span>
                     </button>
                 </div>
+                <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
             </div>
         </div>
     );
