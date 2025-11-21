@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -297,6 +298,24 @@ function App() {
             if (matchingAccountsV003.length > 0) {
                 dependentAccountsForObveze[aopV003Item.aop] = matchingAccountsV003.map((acc, index) => ({
                     id: `${aopV003Item.aop}-${acc.konto}-${index}`,
+                    konto: acc.konto,
+                    nazivKonta: acc.opis
+                }));
+            }
+        }
+
+        // Logic for V005 (rbr = 22)
+        const aopV005Item = OBVEZE_AOP_DATA.find(item => item.aop === 'V005');
+        if (aopV005Item) {
+            const matchingAccountsV005 = racunskiPlanData.filter(planItem =>
+                planItem.konto.startsWith('23956') || 
+                planItem.konto.startsWith('23958') || 
+                planItem.konto.startsWith('23122')
+            );
+
+            if (matchingAccountsV005.length > 0) {
+                dependentAccountsForObveze[aopV005Item.aop] = matchingAccountsV005.map((acc, index) => ({
+                    id: `${aopV005Item.aop}-${acc.konto}-${index}`,
                     konto: acc.konto,
                     nazivKonta: acc.opis
                 }));
