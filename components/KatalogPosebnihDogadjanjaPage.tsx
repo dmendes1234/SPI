@@ -286,6 +286,7 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                                     <th className="p-2 font-semibold w-24">Račun</th>
                                     <th className="p-2 font-semibold w-10 text-center">D/P</th>
                                     <th className="p-2 font-semibold w-24 text-right">Postotak iznosa</th>
+                                    <th className="p-2 font-semibold w-16 text-center">Storno</th>
                                     <th className="p-2 font-semibold">Prijepis podataka s pozicije</th>
                                 </tr>
                             </thead>
@@ -303,6 +304,7 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                                             <td className="p-2">{s.racun}</td>
                                             <td className="p-2 text-center">{s.strana}</td>
                                             <td className="p-2 text-right">{s.postotak.toFixed(2).replace('.', ',')} %</td>
+                                            <td className="p-2 text-center">{s.storno ? <CheckIcon className="h-4 w-4 mx-auto text-slate-600" /> : ''}</td>
                                             <td className="p-2">{s.prijepis.join(', ')}</td>
                                         </tr>
                                     );

@@ -30,6 +30,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
     const [strana, setStrana] = useState<'D' | 'P'>('D');
     // Use string for postotak to allow "100,00" formatting in input
     const [postotakInput, setPostotakInput] = useState<string>('100,00');
+    const [storno, setStorno] = useState(false);
     const [prijepis, setPrijepis] = useState<string[]>([]);
     const [validationError, setValidationError] = useState<string>('');
     
@@ -48,12 +49,14 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                 setStrana(itemToEdit.strana);
                 // Convert number to string with comma
                 setPostotakInput(itemToEdit.postotak.toFixed(2).replace('.', ','));
+                setStorno(itemToEdit.storno || false);
                 setPrijepis(itemToEdit.prijepis);
             } else {
                 setSelectedPozicija(null);
                 setSelectedRacun(null);
                 setStrana('D');
                 setPostotakInput('100,00');
+                setStorno(false);
                 setPrijepis([]);
             }
         }
@@ -88,6 +91,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
             racunNaziv: selectedRacun.opis,
             strana,
             postotak: parsedPostotak,
+            storno,
             prijepis
         };
 
@@ -187,6 +191,20 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                                 <span className="ml-2 text-base font-medium text-gray-700">%</span>
                                 {validationError && <span className="ml-3 text-xs text-red-500 font-medium">{validationError}</span>}
                             </div>
+                        </div>
+
+                        {/* Storno */}
+                         <div>
+                            <label className={`inline-flex items-center ${isViewMode ? 'cursor-not-allowed opacity-70' : ''}`}>
+                                <input 
+                                    type="checkbox" 
+                                    className="form-checkbox h-4 w-4 text-blue-600" 
+                                    checked={storno}
+                                    onChange={(e) => setStorno(e.target.checked)}
+                                    disabled={isViewMode}
+                                />
+                                <span className="ml-2 text-sm font-medium text-gray-700">Storno</span>
+                            </label>
                         </div>
 
                         {/* Prijepis */}

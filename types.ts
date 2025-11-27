@@ -80,5 +80,6 @@ export interface StavkaKontiranja {
   racunNaziv: string;
   strana: 'D' | 'P';
   postotak: number;
+  storno: boolean;
   prijepis: string[]; // List of checked values e.g. ['Organizacijska', 'Odjel']
 }
