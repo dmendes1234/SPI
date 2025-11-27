@@ -1,5 +1,6 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
-import { HomeIcon, NewIcon, EditIcon, DeleteIcon, RefreshIcon, ExcelIcon, ViewIcon, CheckIcon, XCircleIcon } from '../constants';
+import { HomeIcon, NewIcon, EditIcon, DeleteIcon, RefreshIcon, ExcelIcon, ViewIcon, CheckIcon, XCircleIcon, InfoIcon, XIcon } from '../constants';
 import Toolbar from './Toolbar';
 import LookUpField from './LookUpField';
 import GenericCrudModal from './GenericCrudModal';
@@ -9,6 +10,14 @@ import type { Dogadjaj, VrstaDokumenta, Pozicija, StavkaKontiranja, Korisnik } f
 
 // Helper for ID generation
 const generateId = () => Math.random().toString(36).substr(2, 9);
+
+// Helper for Date formatting
+const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}.${parts[1]}.${parts[0]}.`;
+};
 
 interface KatalogPosebnihDogadjanjaPageProps {
     selectedKorisnik: Korisnik;
@@ -237,6 +246,8 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                                 <tr>
                                     <th className="p-2 font-semibold w-24">Šifra</th>
                                     <th className="p-2 font-semibold">Naziv</th>
+                                    <th className="p-2 font-semibold w-24 text-center">Aktivnost</th>
+                                    <th className="p-2 font-semibold w-32">Aktivnost od</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
@@ -248,6 +259,10 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                                     >
                                         <td className="p-2">{d.sifra}</td>
                                         <td className="p-2">{d.naziv}</td>
+                                        <td className="p-2 text-center">
+                                            {d.aktivnost && <CheckIcon className="h-4 w-4 mx-auto" />}
+                                        </td>
+                                        <td className="p-2">{d.aktivnost ? formatDate(d.aktivnostOd) : ''}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -325,6 +340,7 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                     onClose={() => setIsDogadjajFormOpen(false)}
                     mode={dogadjajFormMode}
                     initialData={dogadjajFormMode !== 'new' ? selectedDogadjaj : null}
+                    existingEvents={dogadjaji}
                     onSave={(data) => {
                         if (dogadjajFormMode === 'new') {
                             const newEvent = onSaveDogadjaj(data);
@@ -391,11 +407,23 @@ const SimpleDogadjajForm: React.FC<{
     onClose: () => void;
     mode: 'new' | 'edit' | 'view';
     initialData: Dogadjaj | null;
-    onSave: (data: { sifra: string; naziv: string }) => void;
-}> = ({ isOpen, onClose, mode, initialData, onSave }) => {
+    existingEvents: Dogadjaj[];
+    onSave: (data: { sifra: string; naziv: string, aktivnost: boolean, aktivnostOd: string | null }) => void;
+}> = ({ isOpen, onClose, mode, initialData, existingEvents, onSave }) => {
     const [sifra, setSifra] = useState(initialData?.sifra || '');
     const [naziv, setNaziv] = useState(initialData?.naziv || '');
+    
+    // Initialize aktivnost and aktivnostOd based on mode and initialData
+    const [aktivnost, setAktivnost] = useState(initialData ? initialData.aktivnost : true);
+    const [aktivnostOd, setAktivnostOd] = useState(() => {
+        if (initialData) {
+             return initialData.aktivnost ? (initialData.aktivnostOd || '') : '';
+        }
+        return new Date().toISOString().split('T')[0];
+    });
+
     const [error, setError] = useState('');
+    const [showWarningModal, setShowWarningModal] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -408,7 +436,33 @@ const SimpleDogadjajForm: React.FC<{
         if(/\s/.test(sifra)) { setError('Šifra ne smije imati razmake'); return; }
         if(naziv.length > 100) { setError('Naziv max 100 znakova'); return; }
         
-        onSave({ sifra, naziv });
+        if (aktivnost && !aktivnostOd) {
+            setError('Datum aktivnosti je obavezan ako je događaj aktivan.');
+            return;
+        }
+
+        // Duplicate Check
+        const isDuplicate = existingEvents.some(e => 
+            e.sifra === sifra && (mode === 'new' || e.id !== initialData?.id)
+        );
+
+        if (isDuplicate) {
+            setShowWarningModal(true);
+            return;
+        }
+
+        onSave({ sifra, naziv, aktivnost, aktivnostOd: aktivnost ? aktivnostOd : null });
+    };
+
+    const handleAktivnostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (mode === 'view') return;
+        const checked = e.target.checked;
+        setAktivnost(checked);
+        if (checked) {
+            setAktivnostOd(new Date().toISOString().split('T')[0]);
+        } else {
+            setAktivnostOd('');
+        }
     };
 
     if (!isOpen) return null;
@@ -418,45 +472,103 @@ const SimpleDogadjajForm: React.FC<{
     if (mode === 'view') title = 'Uvid događaja';
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-                <div className="bg-slate-700 text-white p-3 rounded-t-lg flex justify-between">
-                    <span className="font-semibold">{title}</span>
-                    <button onClick={onClose}>X</button>
+        <>
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+                    <div className="bg-slate-700 text-white p-3 rounded-t-lg flex justify-between">
+                        <span className="font-semibold">{title}</span>
+                        <button onClick={onClose}>X</button>
+                    </div>
+                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        {error && <div className="text-red-500 text-sm">{error}</div>}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Šifra</label>
+                            <input 
+                                value={sifra} 
+                                onChange={e => setSifra(e.target.value)} 
+                                className={`mt-1 w-full border p-2 rounded ${mode === 'view' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-50 text-gray-900'}`} 
+                                readOnly={mode === 'view'}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Naziv</label>
+                            <input 
+                                value={naziv} 
+                                onChange={e => setNaziv(e.target.value)} 
+                                className={`mt-1 w-full border p-2 rounded ${mode === 'view' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-50 text-gray-900'}`}
+                                readOnly={mode === 'view'}
+                            />
+                        </div>
+                        
+                        <div className="flex items-center space-x-4">
+                            <div className="flex items-center">
+                                <input 
+                                    type="checkbox"
+                                    id="aktivnostCheck"
+                                    checked={aktivnost}
+                                    onChange={handleAktivnostChange}
+                                    className="h-4 w-4 text-blue-600"
+                                    disabled={mode === 'view'}
+                                />
+                                <label htmlFor="aktivnostCheck" className="ml-2 text-sm font-medium text-gray-700">Aktivnost</label>
+                            </div>
+                            
+                            <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Aktivnost od</label>
+                                <input 
+                                    type="date"
+                                    value={aktivnostOd}
+                                    onChange={(e) => setAktivnostOd(e.target.value)}
+                                    className={`w-full border p-2 rounded text-sm ${mode === 'view' || !aktivnost ? 'bg-gray-100 text-gray-500' : 'bg-yellow-50 text-gray-900'}`}
+                                    disabled={mode === 'view' || !aktivnost}
+                                    required={aktivnost}
+                                />
+                            </div>
+                        </div>
+
+
+                        <div className="flex justify-end space-x-2 pt-2">
+                            {mode !== 'view' && (
+                                <button type="submit" className="flex items-center px-3 py-1 bg-slate-700 text-white rounded text-xs hover:bg-slate-800">
+                                    <CheckIcon className="h-4 w-4 mr-1"/> U redu
+                                </button>
+                            )}
+                            <button type="button" onClick={onClose} className="flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300">
+                                <XCircleIcon className="h-4 w-4 mr-1"/> {mode === 'view' ? 'Zatvori' : 'Odustani'}
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    {error && <div className="text-red-500 text-sm">{error}</div>}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Šifra</label>
-                        <input 
-                            value={sifra} 
-                            onChange={e => setSifra(e.target.value)} 
-                            className={`mt-1 w-full border p-2 rounded ${mode === 'view' ? 'bg-gray-100 text-gray-600' : ''}`} 
-                            readOnly={mode === 'view'}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Naziv</label>
-                        <input 
-                            value={naziv} 
-                            onChange={e => setNaziv(e.target.value)} 
-                            className={`mt-1 w-full border p-2 rounded ${mode === 'view' ? 'bg-gray-100 text-gray-600' : ''}`}
-                            readOnly={mode === 'view'}
-                        />
-                    </div>
-                    <div className="flex justify-end space-x-2 pt-2">
-                        {mode !== 'view' && (
-                             <button type="submit" className="flex items-center px-3 py-1 bg-slate-700 text-white rounded text-xs hover:bg-slate-800">
+            </div>
+
+            {showWarningModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex justify-center items-center p-4">
+                     <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+                        <div className="flex justify-between items-center border-b p-4">
+                             <h3 className="text-lg font-semibold text-gray-800">Upozorenje</h3>
+                             <button onClick={() => setShowWarningModal(false)} className="text-gray-400 hover:text-gray-600">
+                                 <XIcon className="h-6 w-6" />
+                             </button>
+                        </div>
+                         <div className="p-6 text-center">
+                             <div className="flex justify-center mb-4">
+                                 <InfoIcon className="h-16 w-16 text-yellow-600" />
+                             </div>
+                             <p className="text-gray-700 font-semibold">Događaj sa zadanom šifrom već postoji na prijavljenom korisniku.</p>
+                         </div>
+                         <div className="flex justify-center p-4 border-t bg-gray-50">
+                             <button
+                                 type="button"
+                                 onClick={() => setShowWarningModal(false)}
+                                 className="flex items-center px-4 py-2 bg-slate-700 text-white rounded text-sm hover:bg-slate-800"
+                             >
                                  <CheckIcon className="h-4 w-4 mr-1"/> U redu
                              </button>
-                        )}
-                        <button type="button" onClick={onClose} className="flex items-center px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs hover:bg-gray-300">
-                            <XCircleIcon className="h-4 w-4 mr-1"/> {mode === 'view' ? 'Zatvori' : 'Odustani'}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                         </div>
+                     </div>
+                </div>
+            )}
+        </>
     );
 };
 

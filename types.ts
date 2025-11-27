@@ -56,6 +56,8 @@ export interface Dogadjaj {
   id: string;
   sifra: string;
   naziv: string;
+  aktivnost: boolean;
+  aktivnostOd: string | null;
 }
 
 export interface VrstaDokumenta {
