@@ -36,6 +36,11 @@ const KatalogAopaPage: React.FC<KatalogAopaPageProps> = ({
     return lowerCaseDescription.includes('šifra') || lowerCaseDescription.includes('šifre');
   }, [selectedAop]);
 
+  const filteredDependentAccounts = useMemo(() => {
+      const accounts = dependentAccountsData[selectedAop?.aop || ''] || [];
+      return accounts.filter(acc => acc.konto.length >= 6);
+  }, [dependentAccountsData, selectedAop]);
+
   return (
     <>
       <BreadcrumbsAndTitle formType={formType} />
@@ -51,7 +56,7 @@ const KatalogAopaPage: React.FC<KatalogAopaPageProps> = ({
         <div className="flex-1 w-full overflow-x-auto lg:flex-[3_3_0%]">
           <DependentAccountsTable
             selectedAop={selectedAop}
-            accountsData={dependentAccountsData[selectedAop?.aop || ''] || []}
+            accountsData={filteredDependentAccounts}
             onUpdateAccount={onUpdateDependentAccount}
             onSetAccounts={onSetDependentAccountsForAop}
             allKorisnici={allKorisnici}
