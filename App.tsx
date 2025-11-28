@@ -242,7 +242,7 @@ function App() {
             const lowerCaseOpis = aopItem.opis.toLowerCase();
             if (!lowerCaseOpis.includes('šifra') && !lowerCaseOpis.includes('šifre')) {
                 const matchingAccounts = racunskiPlanData.filter(planItem =>
-                    planItem.konto.startsWith(aopItem.aop)
+                    planItem.konto.startsWith(aopItem.aop) && planItem.konto.length >= 6
                 );
 
                 if (matchingAccounts.length > 0) {
@@ -274,7 +274,7 @@ function App() {
         const aopV001Item = OBVEZE_AOP_DATA.find(item => item.aop === 'V001');
         if (aopV001Item) {
             const matchingAccountsV001 = racunskiPlanData.filter(planItem =>
-                planItem.konto.startsWith('2') && !planItem.konto.startsWith('29')
+                planItem.konto.startsWith('2') && !planItem.konto.startsWith('29') && planItem.konto.length >= 6
             );
 
             if (matchingAccountsV001.length > 0) {
@@ -290,9 +290,9 @@ function App() {
         const aopV003Item = OBVEZE_AOP_DATA.find(item => item.aop === 'V003');
         if (aopV003Item) {
             const matchingAccountsV003 = racunskiPlanData.filter(planItem =>
-                planItem.konto.startsWith('23956') || 
+                (planItem.konto.startsWith('23956') || 
                 planItem.konto.startsWith('23958') || 
-                planItem.konto.startsWith('23122')
+                planItem.konto.startsWith('23122')) && planItem.konto.length >= 6
             );
 
             if (matchingAccountsV003.length > 0) {
@@ -308,9 +308,9 @@ function App() {
         const aopV005Item = OBVEZE_AOP_DATA.find(item => item.aop === 'V005');
         if (aopV005Item) {
             const matchingAccountsV005 = racunskiPlanData.filter(planItem =>
-                planItem.konto.startsWith('23956') || 
+                (planItem.konto.startsWith('23956') || 
                 planItem.konto.startsWith('23958') || 
-                planItem.konto.startsWith('23122')
+                planItem.konto.startsWith('23122')) && planItem.konto.length >= 6
             );
 
             if (matchingAccountsV005.length > 0) {
@@ -330,7 +330,7 @@ function App() {
             const prefix = aopItem.aop.substring(1); 
             if (prefix) {
                 const matchingAccounts = racunskiPlanData.filter(planItem => 
-                    planItem.konto.startsWith(prefix)
+                    planItem.konto.startsWith(prefix) && planItem.konto.length >= 6
                 );
 
                 if (matchingAccounts.length > 0) {
@@ -358,7 +358,7 @@ function App() {
             const filterLogic = newLogicMap[rbr];
 
             if (aopItem && filterLogic) {
-                const matchingAccounts = racunskiPlanData.filter(planItem => filterLogic(planItem.konto));
+                const matchingAccounts = racunskiPlanData.filter(planItem => filterLogic(planItem.konto) && planItem.konto.length >= 6);
                 if (matchingAccounts.length > 0) {
                     dependentAccountsForObveze[aopItem.aop] = matchingAccounts.map((acc, index) => ({
                         id: `${aopItem.aop}-${acc.konto}-${index}-${Math.random()}`,
