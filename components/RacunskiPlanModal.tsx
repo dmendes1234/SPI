@@ -1,9 +1,11 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { racunskiPlanData } from '../data/racunskiPlanData';
 import type { RacunskiPlanItem } from '../types';
 import { XIcon, RefreshIcon, SaveIcon, ExcelIcon, CheckCircleIcon, InfoIcon } from '../constants';
 import Toolbar from './Toolbar';
 import NotImplementedModal from './NotImplementedModal';
+import ContextMenu from './ContextMenu';
 
 interface RacunskiPlanModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
   const [taggedAccounts, setTaggedAccounts] = useState<RacunskiPlanItem[]>([]);
   const [showTaggedOnly, setShowTaggedOnly] = useState(false);
   const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   const toolbarActions = [
     { label: 'Osvježi', icon: <RefreshIcon /> },
@@ -54,7 +57,7 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
     }
     
     return data.filter(item => 
-        item.konto.toLowerCase().includes(filters.konto.toLowerCase()) &&
+        item.konto.toLowerCase().startsWith(filters.konto.toLowerCase()) &&
         item.opis.toLowerCase().includes(filters.opis.toLowerCase())
     );
   }, [filters, taggedAccounts, showTaggedOnly, filterMinLength]);
@@ -95,6 +98,36 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
           const newAccounts = filteredData.filter(item => !currentKonti.includes(item.konto));
           setTaggedAccounts(prev => [...prev, ...newAccounts]);
       }
+  };
+
+  const handleContextMenu = (event: React.MouseEvent<HTMLTableRowElement>) => {
+    if (isSingleSelect) return;
+    event.preventDefault();
+    setContextMenu({ x: event.clientX, y: event.clientY });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const handleSelectAllShown = () => {
+    setTaggedAccounts(prev => {
+        const currentKonti = new Set(prev.map(a => a.konto));
+        const newAccounts = [...prev];
+        filteredData.forEach(item => {
+            if (!currentKonti.has(item.konto)) {
+                newAccounts.push(item);
+            }
+        });
+        return newAccounts;
+    });
+    handleCloseContextMenu();
+  };
+
+  const handleDeselectAllShown = () => {
+    const filteredKonti = new Set(filteredData.map(a => a.konto));
+    setTaggedAccounts(prev => prev.filter(a => !filteredKonti.has(a.konto)));
+    handleCloseContextMenu();
   };
 
   const handleSelect = () => {
@@ -157,7 +190,7 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
-      <div className="bg-gray-100 rounded-sm shadow-xl w-full max-w-4xl h-full flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bg-gray-100 rounded-sm shadow-xl w-full max-w-4xl h-full flex flex-col" onClick={e => {e.stopPropagation(); handleCloseContextMenu(); }}>
         <div className="bg-slate-700 text-white p-2 flex justify-between items-center rounded-t-sm">
           <h3 className="text-sm font-semibold">Odabir - Računski plan</h3>
           <button onClick={onClose} className="text-white hover:text-gray-300" aria-label="Close modal">
@@ -201,6 +234,7 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
                   <tr 
                     key={item.konto} 
                     onClick={() => handleToggleAccount(item)} 
+                    onContextMenu={handleContextMenu}
                     className={`cursor-pointer hover:bg-blue-100 ${taggedAccounts.some(a => a.konto === item.konto) ? 'bg-blue-200' : ''}`}
                     style={{ height: `${ROW_HEIGHT}px`}}
                   >
@@ -252,6 +286,23 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
             </div>
         </div>
         <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
+        
+        {contextMenu && !isSingleSelect && (
+          <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={handleCloseContextMenu}>
+              <button 
+                  onClick={handleSelectAllShown} 
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                  Označi sve prikazane
+              </button>
+              <button 
+                  onClick={handleDeselectAllShown} 
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                  Odznači sve prikazane
+              </button>
+          </ContextMenu>
+        )}
       </div>
     </div>
   );
