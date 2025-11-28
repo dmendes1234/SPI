@@ -124,6 +124,7 @@ const NewAccountModal: React.FC<NewAccountModalProps> = ({ isOpen, onClose, onSa
           onClose={() => setIsPlanModalOpen(false)}
           onSelect={handleAccountSelect}
           initiallySelectedAccounts={selectedAccounts}
+          filterMinLength={6}
         />
       )}
     </>
