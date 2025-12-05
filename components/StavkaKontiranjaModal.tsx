@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { XIcon, CheckIcon, XCircleIcon } from '../constants';
 import type { StavkaKontiranja, Pozicija, RacunskiPlanItem } from '../types';
@@ -113,7 +114,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
     };
 
     const handleCheckboxChange = (option: string) => {
-        if (isViewMode) return;
+        if (isViewMode || !selectedPozicija) return;
         setPrijepis(prev => {
             if (prev.includes(option)) return prev.filter(o => o !== option);
             return [...prev, option];
@@ -209,16 +210,16 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
 
                         {/* Prijepis */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Prijepis podataka s pozicije</label>
-                            <div className="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded border border-gray-200">
+                            <label className={`block text-sm font-medium ${!selectedPozicija ? 'text-gray-400' : 'text-gray-700'} mb-2`}>Prijepis podataka s pozicije</label>
+                            <div className={`grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded border border-gray-200 ${!selectedPozicija ? 'opacity-50' : ''}`}>
                                 {prijepisOptions.map(opt => (
-                                    <label key={opt} className={`inline-flex items-center ${isViewMode ? 'cursor-not-allowed opacity-70' : ''}`}>
+                                    <label key={opt} className={`inline-flex items-center ${isViewMode || !selectedPozicija ? 'cursor-not-allowed opacity-70' : ''}`}>
                                         <input 
                                             type="checkbox" 
                                             className="form-checkbox h-4 w-4 text-blue-600" 
                                             checked={prijepis.includes(opt)}
                                             onChange={() => handleCheckboxChange(opt)}
-                                            disabled={isViewMode}
+                                            disabled={isViewMode || !selectedPozicija}
                                         />
                                         <span className="ml-2 text-sm text-gray-700">{opt}</span>
                                     </label>
