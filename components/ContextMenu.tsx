@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 
 interface ContextMenuProps {
@@ -25,7 +26,7 @@ const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, onClose, children }) =>
   return (
     <div
       ref={menuRef}
-      className="absolute z-50 bg-white border border-gray-200 rounded-md shadow-lg py-1"
+      className="fixed z-[100] bg-white border border-gray-200 rounded-md shadow-lg py-1"
       style={{ top: y, left: x }}
     >
       {children}

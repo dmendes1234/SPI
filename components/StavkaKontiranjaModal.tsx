@@ -162,6 +162,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                                 required={!isViewMode}
                                 disabled={isViewMode}
                                 className="w-full"
+                                onClear={() => setSelectedVrstaDokumenta(null)}
                             />
                         </div>
 
@@ -207,6 +208,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                                 onButtonClick={() => setIsPozicijaModalOpen(true)}
                                 disabled={isViewMode}
                                 className="w-full"
+                                onClear={() => setSelectedPozicija(null)}
                             />
                         </div>
 
@@ -220,6 +222,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                                 required={!isViewMode}
                                 disabled={isViewMode}
                                 className="w-full"
+                                onClear={() => setSelectedRacun(null)}
                             />
                         </div>
 
