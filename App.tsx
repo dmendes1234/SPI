@@ -88,6 +88,9 @@ function App() {
   // Stavke are per user (since they belong to events which are per user)
   const [allStavkeByKorisnik, setAllStavkeByKorisnik] = useState<{[korisnikId: string]: StavkaKontiranja[]}>({});
 
+  // Parametri aplikacije state
+  const [isObjedinjenaGlavnaKnjigaEnabled, setIsObjedinjenaGlavnaKnjigaEnabled] = useState(true);
+
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isAppDrawerOpen, setIsAppDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
@@ -625,7 +628,7 @@ function App() {
     if (!selectedKorisnik) return;
     setAllStavkeByKorisnik(prev => {
         const currentStavke = prev[selectedKorisnik.id] || [];
-        const groupStavke = currentStavke.filter(item => item.dogadjajId === s.dogadjajId && item.vrstaDokumentaId === s.vrstaDokumentaId);
+        const groupStavke = currentStavke.filter(item => item.dogadjajId === s.dogadjajId);
         const maxRbr = groupStavke.length > 0 ? Math.max(...groupStavke.map(i => i.rbr)) : 0;
         const newItem = { ...s, id: generateId(), rbr: maxRbr + 1 };
         return { ...prev, [selectedKorisnik.id]: [...currentStavke, newItem] };
@@ -649,16 +652,16 @@ function App() {
             return prev;
         }
         
-        const { dogadjajId, vrstaDokumentaId } = itemToDelete;
+        const { dogadjajId } = itemToDelete;
 
         const remainingStavke = currentStavkeForUser.filter(item => item.id !== id);
         
         const groupToRenumber = remainingStavke
-            .filter(s => s.dogadjajId === dogadjajId && s.vrstaDokumentaId === vrstaDokumentaId)
+            .filter(s => s.dogadjajId === dogadjajId)
             .sort((a, b) => a.rbr - b.rbr);
 
         const otherItems = remainingStavke
-            .filter(s => s.dogadjajId !== dogadjajId || s.vrstaDokumentaId !== vrstaDokumentaId);
+            .filter(s => s.dogadjajId !== dogadjajId);
             
         const renumberedGroup = groupToRenumber.map((item, index) => ({
             ...item,
@@ -979,6 +982,7 @@ function App() {
                     onSaveStavka={handleSaveStavka}
                     onUpdateStavka={handleUpdateStavka}
                     onDeleteStavka={handleDeleteStavka}
+                    isObjedinjenaGlavnaKnjigaEnabled={isObjedinjenaGlavnaKnjigaEnabled}
                 />
             )}
             {currentPage === 'katalog-operatera' && activeApp?.id === '099' && (
@@ -1007,7 +1011,10 @@ function App() {
               />
             )}
             {currentPage === 'parametri-aplikacije' && activeApp?.id === '147' && (
-              <ParametriAplikacijePage />
+              <ParametriAplikacijePage 
+                isObjedinjenaGlavnaKnjigaEnabled={isObjedinjenaGlavnaKnjigaEnabled}
+                setIsObjedinjenaGlavnaKnjigaEnabled={setIsObjedinjenaGlavnaKnjigaEnabled}
+              />
             )}
           </div>
           <Footer />

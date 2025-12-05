@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { HomeIcon, NewIcon, EditIcon, DeleteIcon, RefreshIcon, ExcelIcon, ViewIcon, CheckIcon, XCircleIcon, InfoIcon, XIcon } from '../constants';
 import Toolbar from './Toolbar';
-import LookUpField from './LookUpField';
 import GenericCrudModal from './GenericCrudModal';
 import StavkaKontiranjaModal from './StavkaKontiranjaModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
@@ -42,6 +41,8 @@ interface KatalogPosebnihDogadjanjaPageProps {
     onSaveStavka: (s: Omit<StavkaKontiranja, 'id' | 'rbr'>) => void;
     onUpdateStavka: (s: StavkaKontiranja) => void;
     onDeleteStavka: (id: string) => void;
+    
+    isObjedinjenaGlavnaKnjigaEnabled: boolean; // Added prop
 }
 
 const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps> = ({
@@ -50,11 +51,12 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
     onSaveDogadjaj, onUpdateDogadjaj, onDeleteDogadjaj,
     onSaveVrstaDokumenta, onUpdateVrstaDokumenta, onDeleteVrstaDokumenta,
     onSavePozicija, onUpdatePozicija, onDeletePozicija,
-    onSaveStavka, onUpdateStavka, onDeleteStavka
+    onSaveStavka, onUpdateStavka, onDeleteStavka,
+    isObjedinjenaGlavnaKnjigaEnabled
 }) => {
     // Selection State
     const [selectedDogadjaj, setSelectedDogadjaj] = useState<Dogadjaj | null>(null);
-    const [selectedVrstaDokumenta, setSelectedVrstaDokumenta] = useState<VrstaDokumenta | null>(null);
+    const [selectedVrstaDokumenta, setSelectedVrstaDokumenta] = useState<VrstaDokumenta | null>(null); // Kept for modal state
     const [selectedStavka, setSelectedStavka] = useState<StavkaKontiranja | null>(null);
 
     // Modal State
@@ -72,14 +74,6 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
         onConfirm: () => void;
     } | null>(null);
 
-    // Initial Selection for Vrsta Dokumenta
-    useEffect(() => {
-        if (vrsteDokumenata.length > 0 && !selectedVrstaDokumenta) {
-            const ura = vrsteDokumenata.find(v => v.sifra === 'URA');
-            setSelectedVrstaDokumenta(ura || vrsteDokumenata[0]);
-        }
-    }, [vrsteDokumenata, selectedVrstaDokumenta]);
-
     // Sync selected items with fresh data from props to prevent stale data in modals
     useEffect(() => {
         if (selectedDogadjaj) {
@@ -93,21 +87,6 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
     }, [dogadjaji, selectedDogadjaj]);
 
     useEffect(() => {
-        if (selectedVrstaDokumenta) {
-            const updated = vrsteDokumenata.find(v => v.id === selectedVrstaDokumenta.id);
-            if (updated && updated !== selectedVrstaDokumenta) {
-                setSelectedVrstaDokumenta(updated);
-            } else if (!updated && vrsteDokumenata.length > 0) {
-                 // Fallback if deleted
-                const ura = vrsteDokumenata.find(v => v.sifra === 'URA');
-                setSelectedVrstaDokumenta(ura || vrsteDokumenata[0]);
-            } else if (!updated) {
-                setSelectedVrstaDokumenta(null);
-            }
-        }
-    }, [vrsteDokumenata, selectedVrstaDokumenta]);
-
-    useEffect(() => {
         if (selectedStavka) {
             const updated = stavke.find(s => s.id === selectedStavka.id);
             if (updated && updated !== selectedStavka) {
@@ -118,26 +97,21 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
         }
     }, [stavke, selectedStavka]);
 
-    // Filtered Stavke
+    // Filtered Stavke - Now filtered only by Dogadjaj
     const filteredStavke = useMemo(() => {
-        if (!selectedDogadjaj || !selectedVrstaDokumenta) return [];
-        return stavke.filter(s => s.dogadjajId === selectedDogadjaj.id && s.vrstaDokumentaId === selectedVrstaDokumenta.id);
-    }, [stavke, selectedDogadjaj, selectedVrstaDokumenta]);
+        if (!selectedDogadjaj) return [];
+        return stavke.filter(s => s.dogadjajId === selectedDogadjaj.id);
+    }, [stavke, selectedDogadjaj]);
 
     // Handlers for Events (Top Grid)
     const handleNewDogadjaj = () => {
-         // Re-using GenericCrudModal logic, we need to set it to "selection mode false" basically via props
          setIsDogadjajModalOpen(true);
-    };
-
-    const handleSelectVrstaDokumenta = (item: VrstaDokumenta) => {
-        setSelectedVrstaDokumenta(item);
     };
 
     // Handlers for Items (Bottom Grid)
     const handleNewStavka = () => {
-        if (!selectedDogadjaj || !selectedVrstaDokumenta) {
-            alert('Molimo odaberite događaj i vrstu dokumenta.');
+        if (!selectedDogadjaj) {
+            alert('Molimo odaberite događaj.');
             return;
         }
         setSelectedStavka(null);
@@ -213,6 +187,11 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
             });
         }
     }
+    
+    // Handler for managing Vrste Dokumenata separately (hidden from UI flow but modal kept)
+    const handleManageVrsteDokumenata = () => {
+        setIsVrstaDokumentaModalOpen(true);
+    };
 
     return (
         <>
@@ -226,6 +205,10 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                     <span>&rsaquo;</span>
                     <span className="text-gray-800 font-semibold">Katalog posebnih događaja</span>
                 </div>
+                {/* Hidden/Developer button to manage global doc types if needed, or we can assume they are managed elsewhere */}
+                <button onClick={handleManageVrsteDokumenata} className="text-xs text-gray-400 hover:text-gray-600">
+                    Upravljanje vrstama dokumenata
+                </button>
             </div>
 
             <div className="flex flex-col flex-1 mt-2 space-y-3 overflow-hidden">
@@ -270,23 +253,11 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                     </div>
                 </div>
 
-                {/* Middle Section: Vrsta Dokumenta Selector */}
-                <div className="flex items-center p-2 bg-gray-50 border border-gray-200 rounded-sm">
-                    <LookUpField 
-                        label="Vrsta dokumenta" 
-                        valueLeft={selectedVrstaDokumenta?.sifra || ''}
-                        valueRight={selectedVrstaDokumenta?.naziv || ''}
-                        onButtonClick={() => setIsVrstaDokumentaModalOpen(true)}
-                        className="w-full max-w-2xl"
-                        labelClassName="mr-2 text-sm text-gray-700 text-left whitespace-nowrap"
-                    />
-                </div>
-
                 {/* Bottom Section: Stavke Grid */}
                 <div className="flex flex-col flex-[1] min-h-0 bg-white border border-gray-200 shadow-sm">
-                    <div className="p-2 border-b font-semibold text-gray-700 bg-gray-50">Stavke kontiranja događaja za odabranu vrstu dokumenta</div>
+                    <div className="p-2 border-b font-semibold text-gray-700 bg-gray-50">Stavke kontiranja događaja</div>
                     <Toolbar actions={[
-                         { label: 'Novi', icon: <NewIcon />, onClick: handleNewStavka, disabled: !selectedDogadjaj || !selectedVrstaDokumenta },
+                         { label: 'Novi', icon: <NewIcon />, onClick: handleNewStavka, disabled: !selectedDogadjaj },
                          { label: 'Promjena', icon: <EditIcon />, onClick: handleEditStavka, disabled: !selectedStavka },
                          { label: 'Brisanje', icon: <DeleteIcon />, onClick: handleDeleteStavka, disabled: !selectedStavka },
                          { label: 'Uvid', icon: <ViewIcon />, onClick: handleViewStavka, disabled: !selectedStavka },
@@ -297,6 +268,10 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                             <thead className="sticky top-0 bg-slate-600 text-white z-10">
                                 <tr>
                                     <th className="p-2 font-semibold w-12">Rbr.</th>
+                                    <th className="p-2 font-semibold w-24">Vrsta dok.</th>
+                                    {isObjedinjenaGlavnaKnjigaEnabled && (
+                                        <th className="p-2 font-semibold w-24">Glavna knjiga</th>
+                                    )}
                                     <th className="p-2 font-semibold w-20">Pozicija</th>
                                     <th className="p-2 font-semibold w-24">Račun</th>
                                     <th className="p-2 font-semibold w-10 text-center">D/P</th>
@@ -308,6 +283,7 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                             <tbody className="divide-y divide-gray-200">
                                 {filteredStavke.map(s => {
                                     const poz = pozicije.find(p => p.id === s.pozicijaId);
+                                    const vrstaDok = vrsteDokumenata.find(v => v.id === s.vrstaDokumentaId);
                                     return (
                                         <tr 
                                             key={s.id}
@@ -315,6 +291,10 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                                             className={`cursor-pointer hover:bg-blue-100 ${selectedStavka?.id === s.id ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}`}
                                         >
                                             <td className="p-2">{s.rbr}</td>
+                                            <td className="p-2">{vrstaDok?.sifra || ''}</td>
+                                            {isObjedinjenaGlavnaKnjigaEnabled && (
+                                                <td className="p-2">{s.glavnaKnjiga || 'NP'}</td>
+                                            )}
                                             <td className="p-2">{poz?.sifra || ''}</td>
                                             <td className="p-2">{s.racun}</td>
                                             <td className="p-2 text-center">{s.strana}</td>
@@ -354,7 +334,7 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                 />
             )}
 
-            {/* Vrsta Dokumenta Manager */}
+            {/* Vrsta Dokumenta Manager - Only accessible via hidden button now, but kept for data integrity ops */}
             <GenericCrudModal 
                 isOpen={isVrstaDokumentaModalOpen}
                 onClose={() => setIsVrstaDokumentaModalOpen(false)}
@@ -363,26 +343,28 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                 onSave={onSaveVrstaDokumenta}
                 onUpdate={onUpdateVrstaDokumenta}
                 onDelete={onDeleteVrstaDokumenta}
-                onSelect={handleSelectVrstaDokumenta}
-                isSelectionMode={true}
+                isSelectionMode={false}
             />
 
             {/* Stavka Modal */}
-            {isStavkaModalOpen && selectedDogadjaj && selectedVrstaDokumenta && (
+            {isStavkaModalOpen && selectedDogadjaj && (
                 <StavkaKontiranjaModal 
                     isOpen={isStavkaModalOpen}
                     onClose={() => setIsStavkaModalOpen(false)}
                     itemToEdit={isStavkaEditMode || isStavkaViewMode ? selectedStavka : null}
                     dogadjajId={selectedDogadjaj.id}
-                    vrstaDokumentaId={selectedVrstaDokumenta.id}
+                    // vrstaDokumentaId is now handled inside the modal via selection
+                    
                     onSave={onSaveStavka}
                     onUpdate={onUpdateStavka}
                     
+                    vrsteDokumenata={vrsteDokumenata}
                     pozicije={pozicije}
                     onAddPozicija={onSavePozicija}
                     onUpdatePozicija={onUpdatePozicija}
                     onDeletePozicija={onDeletePozicija}
                     isViewMode={isStavkaViewMode}
+                    isObjedinjenaGlavnaKnjigaEnabled={isObjedinjenaGlavnaKnjigaEnabled}
                 />
             )}
 
@@ -415,10 +397,12 @@ const SimpleDogadjajForm: React.FC<{
     
     // Initialize aktivnost and aktivnostOd based on mode and initialData
     const [aktivnost, setAktivnost] = useState(initialData ? initialData.aktivnost : true);
-    const [aktivnostOd, setAktivnostOd] = useState(() => {
+    
+    const [aktivnostOdInput, setAktivnostOdInput] = useState(() => {
         if (initialData) {
              return initialData.aktivnost ? (initialData.aktivnostOd || '') : '';
         }
+        // Initial format YYYY-MM-DD
         return new Date().toISOString().split('T')[0];
     });
 
@@ -436,9 +420,14 @@ const SimpleDogadjajForm: React.FC<{
         if(/\s/.test(sifra)) { setError('Šifra ne smije imati razmake'); return; }
         if(naziv.length > 100) { setError('Naziv max 100 znakova'); return; }
         
-        if (aktivnost && !aktivnostOd) {
-            setError('Datum aktivnosti je obavezan ako je događaj aktivan.');
-            return;
+        let parsedDate: string | null = null;
+
+        if (aktivnost) {
+            if (!aktivnostOdInput) {
+                setError('Datum aktivnosti je obavezan ako je događaj aktivan.');
+                return;
+            }
+             parsedDate = aktivnostOdInput;
         }
 
         // Duplicate Check
@@ -451,7 +440,7 @@ const SimpleDogadjajForm: React.FC<{
             return;
         }
 
-        onSave({ sifra, naziv, aktivnost, aktivnostOd: aktivnost ? aktivnostOd : null });
+        onSave({ sifra, naziv, aktivnost, aktivnostOd: aktivnost ? parsedDate : null });
     };
 
     const handleAktivnostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -459,9 +448,9 @@ const SimpleDogadjajForm: React.FC<{
         const checked = e.target.checked;
         setAktivnost(checked);
         if (checked) {
-            setAktivnostOd(new Date().toISOString().split('T')[0]);
+            setAktivnostOdInput(new Date().toISOString().split('T')[0]);
         } else {
-            setAktivnostOd('');
+            setAktivnostOdInput('');
         }
     };
 
@@ -517,11 +506,10 @@ const SimpleDogadjajForm: React.FC<{
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Aktivnost od</label>
                                 <input 
                                     type="date"
-                                    value={aktivnostOd}
-                                    onChange={(e) => setAktivnostOd(e.target.value)}
+                                    value={aktivnostOdInput}
+                                    onChange={(e) => setAktivnostOdInput(e.target.value)}
                                     className={`w-full border p-2 rounded text-sm ${mode === 'view' || !aktivnost ? 'bg-gray-100 text-gray-500' : 'bg-yellow-50 text-gray-900'}`}
                                     disabled={mode === 'view' || !aktivnost}
-                                    required={aktivnost}
                                 />
                             </div>
                         </div>

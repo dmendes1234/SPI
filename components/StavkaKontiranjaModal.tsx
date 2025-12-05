@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { XIcon, CheckIcon, XCircleIcon } from '../constants';
-import type { StavkaKontiranja, Pozicija, RacunskiPlanItem } from '../types';
+import type { StavkaKontiranja, Pozicija, RacunskiPlanItem, VrstaDokumenta } from '../types';
 import LookUpField from './LookUpField';
 import GenericCrudModal from './GenericCrudModal';
 import RacunskiPlanModal from './RacunskiPlanModal';
@@ -14,18 +14,22 @@ interface StavkaKontiranjaModalProps {
     onUpdate: (item: StavkaKontiranja) => void;
     itemToEdit: StavkaKontiranja | null;
     dogadjajId: string;
-    vrstaDokumentaId: string;
+    vrsteDokumenata: VrstaDokumenta[]; // Added prop
     pozicije: Pozicija[];
     onAddPozicija: (p: Omit<Pozicija, 'id'>) => void;
     onUpdatePozicija: (p: Pozicija) => void;
     onDeletePozicija: (id: string) => void;
     isViewMode?: boolean;
+    isObjedinjenaGlavnaKnjigaEnabled: boolean; // Added prop
 }
 
 const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
-    isOpen, onClose, onSave, onUpdate, itemToEdit, dogadjajId, vrstaDokumentaId,
-    pozicije, onAddPozicija, onUpdatePozicija, onDeletePozicija, isViewMode = false
+    isOpen, onClose, onSave, onUpdate, itemToEdit, dogadjajId,
+    vrsteDokumenata, pozicije, onAddPozicija, onUpdatePozicija, onDeletePozicija, isViewMode = false,
+    isObjedinjenaGlavnaKnjigaEnabled
 }) => {
+    const [selectedVrstaDokumenta, setSelectedVrstaDokumenta] = useState<VrstaDokumenta | null>(null);
+    const [glavnaKnjiga, setGlavnaKnjiga] = useState<'NP' | 'PK'>('NP');
     const [selectedPozicija, setSelectedPozicija] = useState<Pozicija | null>(null);
     const [selectedRacun, setSelectedRacun] = useState<RacunskiPlanItem | null>(null);
     const [strana, setStrana] = useState<'D' | 'P'>('D');
@@ -35,6 +39,7 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
     const [prijepis, setPrijepis] = useState<string[]>([]);
     const [validationError, setValidationError] = useState<string>('');
     
+    const [isVrstaDokumentaModalOpen, setIsVrstaDokumentaModalOpen] = useState(false);
     const [isPozicijaModalOpen, setIsPozicijaModalOpen] = useState(false);
     const [isRacunModalOpen, setIsRacunModalOpen] = useState(false);
 
@@ -44,6 +49,8 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
         if (isOpen) {
             setValidationError('');
             if (itemToEdit) {
+                setSelectedVrstaDokumenta(vrsteDokumenata.find(v => v.id === itemToEdit.vrstaDokumentaId) || null);
+                setGlavnaKnjiga(itemToEdit.glavnaKnjiga || 'NP');
                 setSelectedPozicija(pozicije.find(p => p.id === itemToEdit.pozicijaId) || null);
                 const foundRacun = racunskiPlanData.find(r => r.konto === itemToEdit.racun);
                 setSelectedRacun(foundRacun ? foundRacun : { konto: itemToEdit.racun, opis: itemToEdit.racunNaziv });
@@ -53,6 +60,8 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                 setStorno(itemToEdit.storno || false);
                 setPrijepis(itemToEdit.prijepis);
             } else {
+                setSelectedVrstaDokumenta(null);
+                setGlavnaKnjiga('NP');
                 setSelectedPozicija(null);
                 setSelectedRacun(null);
                 setStrana('D');
@@ -61,12 +70,17 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                 setPrijepis([]);
             }
         }
-    }, [isOpen, itemToEdit, pozicije]);
+    }, [isOpen, itemToEdit, pozicije, vrsteDokumenata]);
 
     const handleSave = () => {
         if (isViewMode) return;
         setValidationError('');
         
+        if (!selectedVrstaDokumenta) {
+            alert('Vrsta dokumenta je obavezna!');
+            return;
+        }
+
         if (!selectedRacun) {
             alert('Račun je obavezan!');
             return;
@@ -86,7 +100,8 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
 
         const itemData = {
             dogadjajId,
-            vrstaDokumentaId,
+            vrstaDokumentaId: selectedVrstaDokumenta.id,
+            glavnaKnjiga,
             pozicijaId: selectedPozicija ? selectedPozicija.id : null,
             racun: selectedRacun.konto,
             racunNaziv: selectedRacun.opis,
@@ -137,6 +152,52 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                     </div>
                     
                     <div className="p-6 space-y-4 overflow-y-auto">
+                        {/* Vrsta Dokumenta */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Vrsta dokumenta</label>
+                            <LookUpField 
+                                valueLeft={selectedVrstaDokumenta?.sifra || ''} 
+                                valueRight={selectedVrstaDokumenta?.naziv || ''} 
+                                onButtonClick={() => setIsVrstaDokumentaModalOpen(true)}
+                                required={!isViewMode}
+                                disabled={isViewMode}
+                                className="w-full"
+                            />
+                        </div>
+
+                        {/* Glavna Knjiga */}
+                        {isObjedinjenaGlavnaKnjigaEnabled && (
+                            <div>
+                                <span className="block text-sm font-medium text-gray-700 mb-1">Glavna knjiga</span>
+                                <div className="flex flex-col space-y-2">
+                                    <label className={`inline-flex items-center ${isViewMode ? 'cursor-not-allowed opacity-70' : ''}`}>
+                                        <input 
+                                            type="radio" 
+                                            className="form-radio" 
+                                            name="glavnaKnjiga" 
+                                            value="NP" 
+                                            checked={glavnaKnjiga === 'NP'} 
+                                            onChange={() => setGlavnaKnjiga('NP')} 
+                                            disabled={isViewMode} 
+                                        />
+                                        <span className="ml-2 text-sm">Glavna knjiga proračuna (NP)</span>
+                                    </label>
+                                    <label className={`inline-flex items-center ${isViewMode ? 'cursor-not-allowed opacity-70' : ''}`}>
+                                        <input 
+                                            type="radio" 
+                                            className="form-radio" 
+                                            name="glavnaKnjiga" 
+                                            value="PK" 
+                                            checked={glavnaKnjiga === 'PK'} 
+                                            onChange={() => setGlavnaKnjiga('PK')} 
+                                            disabled={isViewMode} 
+                                        />
+                                        <span className="ml-2 text-sm">Glavna knjiga proračunskih korisnika (PK)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Pozicija */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Pozicija</label>
@@ -157,7 +218,6 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                                 valueRight={selectedRacun?.opis || ''} 
                                 onButtonClick={() => setIsRacunModalOpen(true)}
                                 required={!isViewMode}
-                                inputClassName={!selectedRacun && !isViewMode ? "bg-yellow-50" : "bg-gray-100"}
                                 disabled={isViewMode}
                                 className="w-full"
                             />
@@ -242,7 +302,21 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                 </div>
             </div>
 
-            {/* Sub-Modals */}
+             {/* Sub-Modals */}
+             {isVrstaDokumentaModalOpen && (
+                <GenericCrudModal 
+                    isOpen={isVrstaDokumentaModalOpen}
+                    onClose={() => setIsVrstaDokumentaModalOpen(false)}
+                    title="Odabir - Vrsta dokumenta"
+                    items={vrsteDokumenata}
+                    onSave={() => {}} // No creating new types from here
+                    onUpdate={() => {}}
+                    onDelete={() => {}}
+                    isSelectionMode={true}
+                    onSelect={(item) => { setSelectedVrstaDokumenta(item as VrstaDokumenta); }}
+                />
+            )}
+
             {isPozicijaModalOpen && (
                 <GenericCrudModal 
                     isOpen={isPozicijaModalOpen}

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { HomeIcon } from '../constants';
 
@@ -17,14 +18,18 @@ const ParametriAplikacijeBreadcrumbs: React.FC = () => {
     );
 };
 
+interface ParametriAplikacijePageProps {
+    isObjedinjenaGlavnaKnjigaEnabled: boolean;
+    setIsObjedinjenaGlavnaKnjigaEnabled: (enabled: boolean) => void;
+}
 
-const ParametriAplikacijePage: React.FC = () => {
+const ParametriAplikacijePage: React.FC<ParametriAplikacijePageProps> = ({ isObjedinjenaGlavnaKnjigaEnabled, setIsObjedinjenaGlavnaKnjigaEnabled }) => {
     const [nivoRada, setNivoRada] = useState<'osnovni' | 'analitika'>('analitika');
 
     return (
         <>
             <ParametriAplikacijeBreadcrumbs />
-            <div className="flex-1 p-6 mt-3 bg-white border border-gray-200 shadow-sm">
+            <div className="flex-1 p-6 mt-3 bg-white border border-gray-200 shadow-sm space-y-6">
                 <div className="max-w-md">
                     <fieldset className="border border-gray-300 p-4 rounded-md">
                         <legend className="text-sm font-semibold text-gray-600 px-2">Nivo rada ekonomske klasifikacije</legend>
@@ -52,6 +57,23 @@ const ParametriAplikacijePage: React.FC = () => {
                                     className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
                                 />
                                 <span className="ml-2">Analitika</span>
+                            </label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div className="max-w-md">
+                    <fieldset className="border border-gray-300 p-4 rounded-md">
+                        <legend className="text-sm font-semibold text-gray-600 px-2">Objedinjena glavna knjiga</legend>
+                        <div className="flex items-center mt-2">
+                            <label className="flex items-center text-sm text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    checked={isObjedinjenaGlavnaKnjigaEnabled}
+                                    onChange={(e) => setIsObjedinjenaGlavnaKnjigaEnabled(e.target.checked)}
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="ml-2">Uključi rad objedinjene glavne knjige</span>
                             </label>
                         </div>
                     </fieldset>

@@ -25,6 +25,10 @@ const LookUpField: React.FC<LookUpFieldProps> = ({
     labelClassName
 }) => {
   const finalLabelClassName = labelClassName !== undefined ? labelClassName : "mr-2 text-sm text-gray-700 w-24 text-right";
+  
+  // Determine background color logic
+  // If required and not disabled, force yellow-50. Otherwise use provided inputClassName (default gray-100).
+  const bgClass = required && !disabled ? "bg-yellow-50" : inputClassName;
 
   return (
     <div className={`flex items-center ${className}`}>
@@ -33,7 +37,7 @@ const LookUpField: React.FC<LookUpFieldProps> = ({
             type="text" 
             readOnly 
             value={valueLeft} 
-            className={`border border-gray-300 rounded-l-sm px-2 py-1 text-sm w-20 focus:outline-none ${inputClassName} ${required && !disabled ? 'bg-yellow-100' : ''} ${disabled ? 'text-gray-500' : ''}`} 
+            className={`border border-gray-300 rounded-l-sm px-2 py-1 text-sm w-20 focus:outline-none ${bgClass} ${disabled ? 'text-gray-500' : 'text-black'}`} 
         />
         <button 
             onClick={onButtonClick}
@@ -46,7 +50,7 @@ const LookUpField: React.FC<LookUpFieldProps> = ({
             type="text" 
             readOnly 
             value={valueRight} 
-            className={`border border-gray-300 rounded-r-sm px-2 py-1 text-sm flex-1 focus:outline-none ${inputClassName} ${disabled ? 'text-gray-500' : ''}`} 
+            className={`border border-gray-300 rounded-r-sm px-2 py-1 text-sm flex-1 focus:outline-none ${bgClass} ${disabled ? 'text-gray-500' : 'text-black'}`} 
         />
     </div>
   );

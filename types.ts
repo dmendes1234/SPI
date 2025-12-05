@@ -84,4 +84,5 @@ export interface StavkaKontiranja {
   postotak: number;
   storno: boolean;
   prijepis: string[]; // List of checked values e.g. ['Organizacijska', 'Odjel']
+  glavnaKnjiga: 'NP' | 'PK'; // 'NP' = Glavna knjiga proračuna, 'PK' = Glavna knjiga proračunskih korisnika
 }
