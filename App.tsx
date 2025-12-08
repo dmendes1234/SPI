@@ -69,12 +69,23 @@ function App() {
   
   // State for Katalog posebnih događaja
   // Dogadjaji are per user
-  const [allDogadjajiByKorisnik, setAllDogadjajiByKorisnik] = useState<{[korisnikId: string]: Dogadjaj[]}>({});
+  const [allDogadjajiByKorisnik, setAllDogadjajiByKorisnik] = useState<{[korisnikId: string]: Dogadjaj[]}>({
+      '1': [
+          {
+              id: 'evt-pom',
+              sifra: 'POM',
+              naziv: 'Pomoći unutar općeg proračuna',
+              aktivnost: true,
+              aktivnostOd: '2025-12-08'
+          }
+      ]
+  });
   // Vrsta dokumenta is Global
   const [vrsteDokumenata, setVrsteDokumenata] = useState<VrstaDokumenta[]>([
       { id: '1', sifra: 'URA', naziv: 'Ulazni račun' },
       { id: '2', sifra: 'IRA', naziv: 'Izlazni račun' },
       { id: '3', sifra: 'UGO', naziv: 'Ugovor' },
+      { id: '4', sifra: 'ISP', naziv: 'Isplata' },
   ]);
   // Pozicije are Global
   const [pozicije, setPozicije] = useState<Pozicija[]>([
@@ -87,7 +98,40 @@ function App() {
       { id: '7', sifra: 'R0029', naziv: 'Tekuće pomoći proračunskim korisnicima drugih proračuna' },
   ]);
   // Stavke are per user (since they belong to events which are per user)
-  const [allStavkeByKorisnik, setAllStavkeByKorisnik] = useState<{[korisnikId: string]: StavkaKontiranja[]}>({});
+  const [allStavkeByKorisnik, setAllStavkeByKorisnik] = useState<{[korisnikId: string]: StavkaKontiranja[]}>({
+      '1': [
+          {
+              id: 'st-1', rbr: 1, dogadjajId: 'evt-pom', vrstaDokumentaId: '1', glavnaKnjiga: 'NP',
+              pozicijaId: '7', racun: '936610', racunNaziv: 'OBRAČUNATI RASHODI ZA TEKUĆE POMOĆI PRORAČUNSKIM KORISNICIMA DRUGIH PRORAČUNA',
+              strana: 'D', postotak: 100, storno: false, prijepis: ['Organizacijska', 'Program', 'Izvor', 'Korisnik']
+          },
+          {
+              id: 'st-2', rbr: 2, dogadjajId: 'evt-pom', vrstaDokumentaId: '1', glavnaKnjiga: 'NP',
+              pozicijaId: '7', racun: '236410', racunNaziv: 'OBVEZE ZA TEKUĆE POMOĆI PRORAČUNSKIM KORISNICIMA DRUGIH PRORAČUNA',
+              strana: 'P', postotak: 100, storno: false, prijepis: ['Organizacijska', 'Program', 'Izvor', 'Korisnik']
+          },
+          {
+              id: 'st-3', rbr: 3, dogadjajId: 'evt-pom', vrstaDokumentaId: '4', glavnaKnjiga: 'NP',
+              pozicijaId: '7', racun: '236410', racunNaziv: 'OBVEZE ZA TEKUĆE POMOĆI PRORAČUNSKIM KORISNICIMA DRUGIH PRORAČUNA',
+              strana: 'D', postotak: 100, storno: false, prijepis: ['Organizacijska', 'Program', 'Izvor', 'Korisnik']
+          },
+          {
+              id: 'st-4', rbr: 4, dogadjajId: 'evt-pom', vrstaDokumentaId: '4', glavnaKnjiga: 'NP',
+              pozicijaId: null, racun: '111211', racunNaziv: 'NOVAC NA ŽIRORAČUNU KOD TUZEMNIH POSLOVNIH BANAKA-OTP(18003)',
+              strana: 'P', postotak: 100, storno: false, prijepis: []
+          },
+           {
+              id: 'st-5', rbr: 5, dogadjajId: 'evt-pom', vrstaDokumentaId: '4', glavnaKnjiga: 'NP',
+              pozicijaId: '7', racun: '366110', racunNaziv: 'TEKUĆE POMOĆI PRORAČUNSKIM KORISNICIMA DRUGIH PRORAČUNA',
+              strana: 'D', postotak: 100, storno: false, prijepis: ['Organizacijska', 'Program', 'Izvor', 'Korisnik']
+          },
+           {
+              id: 'st-6', rbr: 6, dogadjajId: 'evt-pom', vrstaDokumentaId: '4', glavnaKnjiga: 'NP',
+              pozicijaId: '7', racun: '936610', racunNaziv: 'OBRAČUNATI RASHODI ZA TEKUĆE POMOĆI PRORAČUNSKIM KORISNICIMA DRUGIH PRORAČUNA',
+              strana: 'P', postotak: 100, storno: false, prijepis: ['Organizacijska', 'Program', 'Izvor', 'Korisnik']
+          },
+      ]
+  });
 
   // Parametri aplikacije state
   const [isObjedinjenaGlavnaKnjigaEnabled, setIsObjedinjenaGlavnaKnjigaEnabled] = useState(true);

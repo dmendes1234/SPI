@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { HomeIcon, NewIcon, EditIcon, DeleteIcon, RefreshIcon, ExcelIcon, ViewIcon, CheckIcon, XCircleIcon, InfoIcon, XIcon } from '../constants';
 import Toolbar from './Toolbar';
 import GenericCrudModal from './GenericCrudModal';
@@ -73,6 +73,48 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
         name: string;
         onConfirm: () => void;
     } | null>(null);
+
+    // Resizing State
+    const [splitPosition, setSplitPosition] = useState(50); // Percentage for top panel
+    const [isResizing, setIsResizing] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const startResizing = useCallback(() => {
+        setIsResizing(true);
+    }, []);
+
+    const stopResizing = useCallback(() => {
+        setIsResizing(false);
+    }, []);
+
+    const resize = useCallback(
+        (mouseMoveEvent: MouseEvent) => {
+            if (isResizing && containerRef.current) {
+                const containerRect = containerRef.current.getBoundingClientRect();
+                const newHeight = mouseMoveEvent.clientY - containerRect.top;
+                const newPercentage = (newHeight / containerRect.height) * 100;
+
+                // Clamp between 10% and 90%
+                if (newPercentage >= 10 && newPercentage <= 90) {
+                    setSplitPosition(newPercentage);
+                }
+            }
+        },
+        [isResizing]
+    );
+
+    useEffect(() => {
+        if (isResizing) {
+            window.addEventListener("mousemove", resize);
+            window.addEventListener("mouseup", stopResizing);
+        }
+
+        return () => {
+            window.removeEventListener("mousemove", resize);
+            window.removeEventListener("mouseup", stopResizing);
+        };
+    }, [isResizing, resize, stopResizing]);
+
 
     // Sync selected items with fresh data from props to prevent stale data in modals
     useEffect(() => {
@@ -207,10 +249,16 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                 </div>
             </div>
 
-            <div className="flex flex-col flex-1 mt-2 space-y-3 overflow-hidden">
+            <div 
+                className={`flex flex-col flex-1 mt-2 overflow-hidden ${isResizing ? 'select-none cursor-row-resize' : ''}`}
+                ref={containerRef}
+            >
                 
                 {/* Top Section: Događaji Grid */}
-                <div className="flex flex-col flex-[1] min-h-0 bg-white border border-gray-200 shadow-sm">
+                <div 
+                    style={{ height: `${splitPosition}%` }}
+                    className="flex flex-col min-h-0 bg-white border border-gray-200 shadow-sm"
+                >
                     <div className="p-2 border-b font-semibold text-gray-700 bg-gray-50">Događaji</div>
                     <Toolbar actions={[
                         { label: 'Novi', icon: <NewIcon />, onClick: openNewDogadjajForm },
@@ -249,8 +297,14 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                     </div>
                 </div>
 
+                {/* Resizer Handle */}
+                <div
+                    className="h-1.5 bg-gray-200 hover:bg-blue-500 cursor-row-resize flex-shrink-0 transition-colors z-20 border-t border-b border-gray-300"
+                    onMouseDown={startResizing}
+                ></div>
+
                 {/* Bottom Section: Stavke Grid */}
-                <div className="flex flex-col flex-[1] min-h-0 bg-white border border-gray-200 shadow-sm">
+                <div className="flex flex-col flex-1 min-h-0 bg-white border border-gray-200 shadow-sm">
                     <div className="p-2 border-b font-semibold text-gray-700 bg-gray-50">Stavke kontiranja događaja</div>
                     <Toolbar actions={[
                          { label: 'Novi', icon: <NewIcon />, onClick: handleNewStavka, disabled: !selectedDogadjaj },
