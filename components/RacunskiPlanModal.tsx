@@ -2,18 +2,20 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { racunskiPlanData } from '../data/racunskiPlanData';
 import type { RacunskiPlanItem } from '../types';
-import { XIcon, RefreshIcon, SaveIcon, ExcelIcon, CheckCircleIcon, InfoIcon } from '../constants';
+import { XIcon, RefreshIcon, SaveIcon, ExcelIcon, CheckCircleIcon, InfoIcon, NewIcon, EditIcon, DeleteIcon } from '../constants';
 import Toolbar from './Toolbar';
 import NotImplementedModal from './NotImplementedModal';
 import ContextMenu from './ContextMenu';
+import RacunskiPlanFormModal from './RacunskiPlanFormModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 interface RacunskiPlanModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (accounts: RacunskiPlanItem[]) => void;
   initiallySelectedAccounts: RacunskiPlanItem[];
-  isSingleSelect?: boolean; // New prop
-  filterMinLength?: number; // New prop
+  isSingleSelect?: boolean;
+  filterMinLength?: number;
 }
 
 const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({ 
@@ -24,28 +26,35 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
     isSingleSelect = false, 
     filterMinLength = 0 
 }) => {
+  // Data State
+  const [allAccounts, setAllAccounts] = useState<RacunskiPlanItem[]>(racunskiPlanData);
+  
+  // UI State
   const [filters, setFilters] = useState({ konto: '', opis: ''});
   const [taggedAccounts, setTaggedAccounts] = useState<RacunskiPlanItem[]>([]);
   const [showTaggedOnly, setShowTaggedOnly] = useState(false);
+  
+  // Modals State
   const [isNotImplementedModalOpen, setIsNotImplementedModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [accountToEdit, setAccountToEdit] = useState<RacunskiPlanItem | null>(null);
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
-  const toolbarActions = [
-    { label: 'Osvježi', icon: <RefreshIcon /> },
-    { label: 'Spremi pretragu', icon: <SaveIcon /> },
-    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
-  ];
-
+  // Initialize state when modal opens
   useEffect(() => {
     if (isOpen) {
       setTaggedAccounts(initiallySelectedAccounts);
-      setFilters({ konto: '', opis: '' }); // Reset filters when modal opens
-      setShowTaggedOnly(false); // Reset checkbox state
+      setFilters({ konto: '', opis: '' });
+      setShowTaggedOnly(false);
+      // We don't reset allAccounts here to persist changes during the session
     }
   }, [isOpen, initiallySelectedAccounts]);
 
+  // Filtering Logic
   const filteredData = useMemo(() => {
-    let data = racunskiPlanData;
+    let data = allAccounts;
     
     if (filterMinLength > 0) {
         data = data.filter(item => item.konto.length >= filterMinLength);
@@ -60,7 +69,62 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
         item.konto.toLowerCase().startsWith(filters.konto.toLowerCase()) &&
         item.opis.toLowerCase().includes(filters.opis.toLowerCase())
     );
-  }, [filters, taggedAccounts, showTaggedOnly, filterMinLength]);
+  }, [filters, taggedAccounts, showTaggedOnly, filterMinLength, allAccounts]);
+  
+  // CRUD Handlers
+  const handleAddNew = () => {
+    setAccountToEdit(null);
+    setIsFormModalOpen(true);
+  };
+
+  const handleEdit = () => {
+    if (taggedAccounts.length === 1) {
+        setAccountToEdit(taggedAccounts[0]);
+        setIsFormModalOpen(true);
+    }
+  };
+
+  const handleDelete = () => {
+    if (taggedAccounts.length === 1) {
+        setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleSaveAccount = (item: RacunskiPlanItem, originalKonto?: string) => {
+    setAllAccounts(prev => {
+        if (originalKonto) {
+            // Update existing
+            return prev.map(acc => acc.konto === originalKonto ? item : acc);
+        } else {
+            // Create new (add to top)
+            return [item, ...prev];
+        }
+    });
+    
+    // If we edited an item that was selected, update selection
+    if (originalKonto) {
+        setTaggedAccounts(prev => prev.map(acc => acc.konto === originalKonto ? item : acc));
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (taggedAccounts.length === 1) {
+        const kontoToDelete = taggedAccounts[0].konto;
+        setAllAccounts(prev => prev.filter(acc => acc.konto !== kontoToDelete));
+        setTaggedAccounts([]); // Clear selection after delete
+        setIsDeleteModalOpen(false);
+    }
+  };
+
+  // Toolbar Actions
+  const toolbarActions = [
+    { label: 'Novi', icon: <NewIcon />, onClick: handleAddNew },
+    { label: 'Promjena', icon: <EditIcon />, onClick: handleEdit, disabled: taggedAccounts.length !== 1 },
+    { label: 'Brisanje', icon: <DeleteIcon />, onClick: handleDelete, disabled: taggedAccounts.length !== 1 },
+    { label: 'Osvježi', icon: <RefreshIcon />, onClick: () => setFilters({ konto: '', opis: '' }) },
+    { label: 'Spremi pretragu', icon: <SaveIcon /> },
+    { label: 'Preuzmi u Excel-u', icon: <ExcelIcon />, onClick: () => setIsNotImplementedModalOpen(true) },
+  ];
   
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -82,19 +146,16 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
   };
 
   const handleToggleSelectAll = () => {
-      if (isSingleSelect) return; // Disable select all for single select mode
+      if (isSingleSelect) return;
 
-      // Toggles only the visible, filtered data
       const currentKonti = taggedAccounts.map(a => a.konto);
       const filteredKonti = filteredData.map(a => a.konto);
       
       const allVisibleSelected = filteredData.every(item => currentKonti.includes(item.konto));
 
       if (allVisibleSelected) {
-          // Deselect all visible
           setTaggedAccounts(prev => prev.filter(acc => !filteredKonti.includes(acc.konto)));
       } else {
-          // Select all visible (that are not already selected)
           const newAccounts = filteredData.filter(item => !currentKonti.includes(item.konto));
           setTaggedAccounts(prev => [...prev, ...newAccounts]);
       }
@@ -138,7 +199,6 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
-  // row height in pixels (p-2 y-padding (16px) + text-xs line height (16px) + 1px border)
   const ROW_HEIGHT = 33; 
   const OVERSCAN_COUNT = 5;
 
@@ -285,8 +345,30 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
                 </button>
             </div>
         </div>
+        
+        {/* Modals */}
         <NotImplementedModal isOpen={isNotImplementedModalOpen} onClose={() => setIsNotImplementedModalOpen(false)} />
         
+        {isFormModalOpen && (
+            <RacunskiPlanFormModal 
+                isOpen={isFormModalOpen}
+                onClose={() => setIsFormModalOpen(false)}
+                onSave={handleSaveAccount}
+                itemToEdit={accountToEdit}
+                existingKontos={allAccounts.map(a => a.konto)}
+            />
+        )}
+        
+        {isDeleteModalOpen && taggedAccounts.length === 1 && (
+            <DeleteConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                itemName={`${taggedAccounts[0].konto} - ${taggedAccounts[0].opis}`}
+                itemType="konto"
+            />
+        )}
+
         {contextMenu && !isSingleSelect && (
           <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={handleCloseContextMenu}>
               <button 
