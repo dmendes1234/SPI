@@ -48,7 +48,8 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
       setTaggedAccounts(initiallySelectedAccounts);
       setFilters({ konto: '', opis: '' });
       setShowTaggedOnly(false);
-      // We don't reset allAccounts here to persist changes during the session
+      // Ensure we are in sync with the module level data in case it changed
+      setAllAccounts(racunskiPlanData);
     }
   }, [isOpen, initiallySelectedAccounts]);
 
@@ -65,10 +66,13 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
         data = data.filter(item => taggedKonti.has(item.konto));
     }
     
-    return data.filter(item => 
+    const result = data.filter(item => 
         item.konto.toLowerCase().startsWith(filters.konto.toLowerCase()) &&
         item.opis.toLowerCase().includes(filters.opis.toLowerCase())
     );
+
+    // Sort by konto
+    return result.sort((a, b) => a.konto.localeCompare(b.konto));
   }, [filters, taggedAccounts, showTaggedOnly, filterMinLength, allAccounts]);
   
   // CRUD Handlers
@@ -91,15 +95,20 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
   };
 
   const handleSaveAccount = (item: RacunskiPlanItem, originalKonto?: string) => {
-    setAllAccounts(prev => {
-        if (originalKonto) {
-            // Update existing
-            return prev.map(acc => acc.konto === originalKonto ? item : acc);
-        } else {
-            // Create new (add to top)
-            return [item, ...prev];
+    // Update the source of truth (module level array)
+    if (originalKonto) {
+        // Update existing in source array
+        const idx = racunskiPlanData.findIndex(acc => acc.konto === originalKonto);
+        if (idx !== -1) {
+            racunskiPlanData[idx] = item;
         }
-    });
+    } else {
+        // Create new (add to top of source array)
+        racunskiPlanData.unshift(item);
+    }
+
+    // Update local state to trigger re-render
+    setAllAccounts([...racunskiPlanData]);
     
     // If we edited an item that was selected, update selection
     if (originalKonto) {
@@ -110,7 +119,16 @@ const RacunskiPlanModal: React.FC<RacunskiPlanModalProps> = ({
   const handleConfirmDelete = () => {
     if (taggedAccounts.length === 1) {
         const kontoToDelete = taggedAccounts[0].konto;
-        setAllAccounts(prev => prev.filter(acc => acc.konto !== kontoToDelete));
+        
+        // Remove from source array
+        const idx = racunskiPlanData.findIndex(acc => acc.konto === kontoToDelete);
+        if (idx !== -1) {
+            racunskiPlanData.splice(idx, 1);
+        }
+
+        // Update local state
+        setAllAccounts([...racunskiPlanData]);
+        
         setTaggedAccounts([]); // Clear selection after delete
         setIsDeleteModalOpen(false);
     }

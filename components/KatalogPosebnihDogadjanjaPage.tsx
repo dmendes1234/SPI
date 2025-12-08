@@ -205,10 +205,6 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                     <span>&rsaquo;</span>
                     <span className="text-gray-800 font-semibold">Katalog posebnih događaja</span>
                 </div>
-                {/* Hidden/Developer button to manage global doc types if needed, or we can assume they are managed elsewhere */}
-                <button onClick={handleManageVrsteDokumenata} className="text-xs text-gray-400 hover:text-gray-600">
-                    Upravljanje vrstama dokumenata
-                </button>
             </div>
 
             <div className="flex flex-col flex-1 mt-2 space-y-3 overflow-hidden">
