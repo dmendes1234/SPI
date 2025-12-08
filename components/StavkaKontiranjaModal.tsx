@@ -14,18 +14,22 @@ interface StavkaKontiranjaModalProps {
     onUpdate: (item: StavkaKontiranja) => void;
     itemToEdit: StavkaKontiranja | null;
     dogadjajId: string;
-    vrsteDokumenata: VrstaDokumenta[]; // Added prop
+    vrsteDokumenata: VrstaDokumenta[]; 
+    onAddVrstaDokumenta: (vd: Omit<VrstaDokumenta, 'id'>) => void;
+    onUpdateVrstaDokumenta: (vd: VrstaDokumenta) => void;
+    onDeleteVrstaDokumenta: (id: string) => void;
     pozicije: Pozicija[];
     onAddPozicija: (p: Omit<Pozicija, 'id'>) => void;
     onUpdatePozicija: (p: Pozicija) => void;
     onDeletePozicija: (id: string) => void;
     isViewMode?: boolean;
-    isObjedinjenaGlavnaKnjigaEnabled: boolean; // Added prop
+    isObjedinjenaGlavnaKnjigaEnabled: boolean;
 }
 
 const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
     isOpen, onClose, onSave, onUpdate, itemToEdit, dogadjajId,
-    vrsteDokumenata, pozicije, onAddPozicija, onUpdatePozicija, onDeletePozicija, isViewMode = false,
+    vrsteDokumenata, onAddVrstaDokumenta, onUpdateVrstaDokumenta, onDeleteVrstaDokumenta,
+    pozicije, onAddPozicija, onUpdatePozicija, onDeletePozicija, isViewMode = false,
     isObjedinjenaGlavnaKnjigaEnabled
 }) => {
     const [selectedVrstaDokumenta, setSelectedVrstaDokumenta] = useState<VrstaDokumenta | null>(null);
@@ -312,9 +316,9 @@ const StavkaKontiranjaModal: React.FC<StavkaKontiranjaModalProps> = ({
                     onClose={() => setIsVrstaDokumentaModalOpen(false)}
                     title="Odabir - Vrsta dokumenta"
                     items={vrsteDokumenata}
-                    onSave={() => {}} // No creating new types from here
-                    onUpdate={() => {}}
-                    onDelete={() => {}}
+                    onSave={onAddVrstaDokumenta}
+                    onUpdate={onUpdateVrstaDokumenta}
+                    onDelete={onDeleteVrstaDokumenta}
                     isSelectionMode={true}
                     onSelect={(item) => { setSelectedVrstaDokumenta(item as VrstaDokumenta); }}
                 />

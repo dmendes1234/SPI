@@ -359,6 +359,10 @@ const KatalogPosebnihDogadjanjaPage: React.FC<KatalogPosebnihDogadjanjaPageProps
                     onUpdate={onUpdateStavka}
                     
                     vrsteDokumenata={vrsteDokumenata}
+                    onAddVrstaDokumenta={onSaveVrstaDokumenta}
+                    onUpdateVrstaDokumenta={onUpdateVrstaDokumenta}
+                    onDeleteVrstaDokumenta={onDeleteVrstaDokumenta}
+
                     pozicije={pozicije}
                     onAddPozicija={onSavePozicija}
                     onUpdatePozicija={onUpdatePozicija}
