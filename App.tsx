@@ -84,6 +84,7 @@ function App() {
       { id: '4', sifra: 'R0001', naziv: 'Pozicija R0001' },
       { id: '5', sifra: 'R0002', naziv: 'Pozicija R0002' },
       { id: '6', sifra: 'R0003', naziv: 'Pozicija R0003' },
+      { id: '7', sifra: 'R0029', naziv: 'Tekuće pomoći proračunskim korisnicima drugih proračuna' },
   ]);
   // Stavke are per user (since they belong to events which are per user)
   const [allStavkeByKorisnik, setAllStavkeByKorisnik] = useState<{[korisnikId: string]: StavkaKontiranja[]}>({});
